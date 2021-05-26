@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.StackPane?>
+<StackPane fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.DownloadHistoryViewController"
+           xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <TableView fx:id="downloadHistoryTable">
+            <columns>
+                <TableColumn fx:id="idColumn" text="ID"/>
+                <TableColumn fx:id="urlColumn" text="URL"/>
+                <TableColumn fx:id="createTimeColumn" text="创建时间"/>
+                <TableColumn fx:id="finishTimeColumn" text="完成时间" sortType="DESCENDING"/>
+                <TableColumn fx:id="durationColumn" text="耗时"/>
+                <TableColumn fx:id="operaColumn" maxWidth="-1.0" minWidth="190.0" prefWidth="190.0" sortable="false"
+                             text="操作"/>
+            </columns>
+            <columnResizePolicy>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+            </columnResizePolicy>
+            <StackPane.margin>
+                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+            </StackPane.margin>
+        </TableView>
+    </children>
+</StackPane>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import java.lang.String?>
+<VBox fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.NewDownloadTaskViewController" alignment="CENTER"
+      prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <HBox alignment="CENTER" prefWidth="600.0">
+            <children>
+                <TextField fx:id="urlTextField" minHeight="38.0" prefHeight="38.0" prefWidth="512.0"
+                           promptText="输入m3u8下载地址，例如：http://www.domain.com/ffr4443f.m3u8/"/>
+                <Button fx:id="downBtn" mnemonicParsing="false" onAction="#downBtnClick" prefHeight="38.0" text="立即下载">
+                    <styleClass>
+                        <String fx:value="btn"/>
+                        <String fx:value="btn-primary"/>
+                    </styleClass>
+                    <HBox.margin>
+                        <Insets left="10.0"/>
+                    </HBox.margin>
+                </Button>
+            </children>
+        </HBox>
+        <HBox maxWidth="600.0" prefWidth="600.0">
+            <children>
+                <CheckBox fx:id="showAdvOptionCheckBox" mnemonicParsing="false" onAction="#showAdvOption"
+                          text="显示高级选项"/>
+            </children>
+            <VBox.margin>
+                <Insets bottom="10.0" top="10.0"/>
+            </VBox.margin>
+        </HBox>
+        <HBox fx:id="advOptionHBox" maxWidth="600.0" prefWidth="600.0" visible="false">
+            <children>
+                <Label text="下载线程数">
+                    <HBox.margin>
+                        <Insets right="10.0"/>
+                    </HBox.margin>
+                </Label>
+                <Slider fx:id="threadCountSlider" blockIncrement="5.0" majorTickUnit="1.0" max="5.0" min="1.0"
+                        minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="1.0"/>
+            </children>
+        </HBox>
+    </children>
+</VBox>
