@@ -12,6 +12,7 @@ public class SystemConfig implements Serializable {
     private Integer id;
     private String downloadDir;
     private Integer defaultThreadCount;
+    private Integer defaultTimeoutRetryCount;
 
     public Integer getId() {
         return id;
@@ -35,5 +36,13 @@ public class SystemConfig implements Serializable {
 
     public void setDefaultThreadCount(Integer defaultThreadCount) {
         this.defaultThreadCount = defaultThreadCount;
+    }
+
+    public Integer getDefaultTimeoutRetryCount() {
+        return defaultTimeoutRetryCount;
+    }
+
+    public void setDefaultTimeoutRetryCount(Integer defaultTimeoutRetryCount) {
+        this.defaultTimeoutRetryCount = defaultTimeoutRetryCount;
     }
 }

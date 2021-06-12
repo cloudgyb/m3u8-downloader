@@ -3,7 +3,7 @@ package com.github.cloudgyb.m3u8downloader.viewcontroller;
 import com.github.cloudgyb.m3u8downloader.ApplicationStore;
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskDao;
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStatusEnum;
-import com.github.cloudgyb.m3u8downloader.model.DownloadTask;
+import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -26,19 +26,19 @@ public class DownloadListViewController {
     private final static String switchBtnStyle = BootstrapStyle.btnXsStyle;
     private final static String deleteBtnStyle = BootstrapStyle.btnDangerStyle + BootstrapStyle.btnXsStyle;
     @FXML
-    private TableView<DownloadTask> downloadTable;
+    private TableView<DownloadTaskViewModel> downloadTable;
     @FXML
-    private TableColumn<DownloadTask, Object> idColumn;
+    private TableColumn<DownloadTaskViewModel, Object> idColumn;
     @FXML
-    private TableColumn<DownloadTask, Object> createTimeColumn;
+    private TableColumn<DownloadTaskViewModel, Object> createTimeColumn;
     @FXML
-    private TableColumn<DownloadTask, Object> urlColumn;
+    private TableColumn<DownloadTaskViewModel, Object> urlColumn;
     @FXML
-    private TableColumn<DownloadTask, Object> progressColumn;
+    private TableColumn<DownloadTaskViewModel, Object> progressColumn;
     @FXML
-    private TableColumn<DownloadTask, Object> durationColumn;
+    private TableColumn<DownloadTaskViewModel, Object> durationColumn;
     @FXML
-    private TableColumn<DownloadTask, Object> operaColumn;
+    private TableColumn<DownloadTaskViewModel, Object> operaColumn;
     private final DownloadTaskDao taskDao;
 
     public DownloadListViewController() {
@@ -47,15 +47,15 @@ public class DownloadListViewController {
 
     public void init() {
         downloadTable.setRowFactory(p -> {
-            final TableRow<DownloadTask> objectTableRow = new TableRow<>();
+            final TableRow<DownloadTaskViewModel> objectTableRow = new TableRow<>();
             objectTableRow.setStyle("-fx-pref-height: 50px");
             return objectTableRow;
         });
         downloadTable.getSortOrder().add(createTimeColumn);
 
-        Callback<TableColumn<DownloadTask, Object>, TableCell<DownloadTask, Object>> defaultCellFactory
+        Callback<TableColumn<DownloadTaskViewModel, Object>, TableCell<DownloadTaskViewModel, Object>> defaultCellFactory
                 = downloadTaskStringTableColumn -> {
-            final TableCell<DownloadTask, Object> cell = new TableCell<>() {
+            final TableCell<DownloadTaskViewModel, Object> cell = new TableCell<>() {
                 @Override
                 public void updateItem(Object item, boolean empty) {
                     if (item != null) {
@@ -76,7 +76,7 @@ public class DownloadListViewController {
         urlColumn.setCellValueFactory(new PropertyValueFactory<>("url"));
 
         progressColumn.setCellFactory(cell -> {
-            TableCell<DownloadTask, Object> c1 = new TableCell<>() {
+            TableCell<DownloadTaskViewModel, Object> c1 = new TableCell<>() {
                 private final ProgressBar progressBar = new ProgressBar(0.0);
                 private final Label label = new Label();
                 private final StackPane pane = new StackPane(progressBar, label);
@@ -92,9 +92,10 @@ public class DownloadListViewController {
                             progressBar.setProgress(progress / 100);
                         }
                         final int index = getIndex();
-                        final DownloadTask downloadTask = downloadTable.getItems().get(index);
-                        final Integer status = downloadTask.getStatus();
-                        label.setText(s);
+                        final DownloadTaskViewModel downloadTaskViewModel = downloadTable.getItems().get(index);
+                        final Integer status = downloadTaskViewModel.getStatus();
+                        if(status==DownloadTaskStatusEnum.RUNNING.getStatus() || !s.endsWith("%"))
+                            label.setText(s);
                         setStyleByTaskStatus(label, status);
                         setGraphic(pane);
                     }
@@ -107,9 +108,9 @@ public class DownloadListViewController {
         durationColumn.setCellFactory(defaultCellFactory);
         durationColumn.setCellValueFactory(new PropertyValueFactory<>("duration"));
 
-        Callback<TableColumn<DownloadTask, Object>, TableCell<DownloadTask, Object>> operaColumnCellFactory = new Callback<>() {
+        Callback<TableColumn<DownloadTaskViewModel, Object>, TableCell<DownloadTaskViewModel, Object>> operaColumnCellFactory = new Callback<>() {
             @Override
-            public TableCell<DownloadTask, Object> call(TableColumn param) {
+            public TableCell<DownloadTaskViewModel, Object> call(TableColumn param) {
                 return new TableCell<>() {
                     private final ToggleButton switchBtn = new ToggleButton("停止");
                     private final ToggleButton delBtn = new ToggleButton("删除");
@@ -160,7 +161,7 @@ public class DownloadListViewController {
         operaColumn.setCellFactory(operaColumnCellFactory);
         operaColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
 
-        List<DownloadTask> notFinishTasks = ApplicationStore.getNoFinishedTasks();
+        List<DownloadTaskViewModel> notFinishTasks = ApplicationStore.getNoFinishedTasks();
         downloadTable.getItems().addAll(notFinishTasks);
         downloadTable.sort();
     }
@@ -180,25 +181,25 @@ public class DownloadListViewController {
     }
 
     private void switchDownloadStatus(int index) {
-        final DownloadTask downloadTask = this.downloadTable.getItems().get(index);
-        final Integer status = downloadTask.getStatus();
+        final DownloadTaskViewModel downloadTaskViewModel = this.downloadTable.getItems().get(index);
+        final Integer status = downloadTaskViewModel.getStatus();
         if (status == DownloadTaskStatusEnum.NEW.getStatus() ||
                 status == DownloadTaskStatusEnum.STOPPED.getStatus() ||
                 status == DownloadTaskStatusEnum.FAILED.getStatus()) {
             try {
-                downloadTask.start();
+                downloadTaskViewModel.start();
             } catch (IOException | ExecutionException | InterruptedException e) {
                 e.printStackTrace();
             }
         } else if (status == DownloadTaskStatusEnum.RUNNING.getStatus())
-            downloadTask.stop();
+            downloadTaskViewModel.stop();
 
     }
 
     public void deleteDownload(int index) {
-        final DownloadTask downloadTask = this.downloadTable.getItems().get(index);
-        downloadTask.remove();
-        taskDao.deleteById(downloadTask.getId());
+        final DownloadTaskViewModel downloadTaskViewModel = this.downloadTable.getItems().get(index);
+        downloadTaskViewModel.remove();
+        taskDao.deleteById(downloadTaskViewModel.getId());
         downloadTable.getItems().remove(index);
     }
 }

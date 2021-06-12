@@ -3,29 +3,26 @@ package com.github.cloudgyb.m3u8downloader.model;
 import com.github.cloudgyb.m3u8downloader.ApplicationStore;
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskDomain;
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStatusEnum;
-import com.github.cloudgyb.m3u8downloader.download.DownloadThread;
+import com.github.cloudgyb.m3u8downloader.download.DownloadTask;
 import com.github.cloudgyb.m3u8downloader.util.DateFormatter;
 import javafx.beans.property.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
- * 下载任务封装类，包装了{@link DownloadTaskDomain},
- * 所有状态的更新都同步到该类，状态的获取来自此类
+ * 下载任务视图模型，包装了{@link DownloadTaskDomain},
+ * 所有下载状态的更新都同步到该类，状态的获取来自此类
  *
  * @author cloudgyb
  * 2021/5/16 18:55
  */
-public class DownloadTask {
-    private final Logger logger = Logger.getLogger(DownloadTask.class.getSimpleName());
+public class DownloadTaskViewModel {
+    private final Logger logger = Logger.getLogger(DownloadTaskViewModel.class.getSimpleName());
 
     private final IntegerProperty id = new SimpleIntegerProperty();
     private final StringProperty url = new SimpleStringProperty();
@@ -34,17 +31,26 @@ public class DownloadTask {
     private final DoubleProperty progress = new SimpleDoubleProperty(0.0);
     private final StringProperty statusText = new SimpleStringProperty();
     private final IntegerProperty status = new SimpleIntegerProperty();
+
     private final DownloadTaskDomain taskDomain;
-    //线程
-    private volatile ThreadPoolExecutor threadPool;
-    private volatile DownloadThread downloadThread;
+    private volatile DownloadTask downloadTask;
+
+    //计时器，用于下载时间计时
+    private Timer timer;
 
 
-    public DownloadTask(DownloadTaskDomain downloadTaskDomain) {
+    /**
+     * 构造一个下载任务视图模型
+     *
+     * @param downloadTaskDomain 该参数包含了下载所需的所有参数配置
+     */
+    public DownloadTaskViewModel(DownloadTaskDomain downloadTaskDomain) {
         this.taskDomain = downloadTaskDomain;
-        init();
+
+        this.init();
     }
 
+    //视图模型初始化
     private void init() {
         this.setId(this.taskDomain.getId());
         this.setUrl(this.taskDomain.getUrl());
@@ -64,64 +70,57 @@ public class DownloadTask {
         if (this.getStatus() == DownloadTaskStatusEnum.RUNNING.getStatus()) {
             return;
         }
-        //每次开始都新建线程，因为start()方法如果是线程终止后，再次调用会出现线程状态异常！（线程不能死而复生...）
-        this.downloadThread = new DownloadThread(this);
-        final int threadCount = this.taskDomain.getThreadCount();
-        //每次开始都新建下载线程池，因为如果此方法调用是下载终止后再次启动下载调用时，
-        // 之前的线程池状态已经是“停止”，不能再提交任务了...
-        this.threadPool = new ThreadPoolExecutor(threadCount, threadCount,
-                0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>(1));
+        this.setProgress(0.0);
         this.setDuration(0L); //重置计时
-        this.downloadThread.start();
+        //重新创建下载线程
+        this.downloadTask = new DownloadTask(this);
+        this.downloadTask.start();
+        this.startTimer();
     }
 
 
     public synchronized void stop() {
-        if (downloadThread != null) {
-            final Timer timer = this.downloadThread.getTimer();
-            if (timer != null)
-                timer.cancel();
-        }
-        if (this.getStatus() == DownloadTaskStatusEnum.RUNNING.getStatus()) {
-            if (threadPool != null && !threadPool.isShutdown()) {
-                threadPool.shutdown();
-            }
-            //直接中断线程
-            if (downloadThread != null && !downloadThread.isInterrupted())
-                downloadThread.interrupt();
-            cleanTempFile();
-        }
+        //只是设置一个状态，当下载线程获取到该状态后会自动停止
+        this.setStatus(DownloadTaskStatusEnum.STOPPING.getStatus());
+        this.setStatusText("正在停止...");
+        if(this.downloadTask != null)
+            this.downloadTask.interrupt();
+        stopTimer();
     }
 
     public synchronized void remove() {
         if (this.getStatus() == DownloadTaskStatusEnum.RUNNING.getStatus())
             this.stop();
         ApplicationStore.getNoFinishedTasks().remove(this);
+        if(this.downloadTask != null)
+            this.downloadTask.interrupt();
+        stopTimer();
     }
 
     public void finish() {
         ApplicationStore.getNoFinishedTasks().remove(this);
+        stopTimer();
     }
 
-    private void cleanTempFile() {
-        logger.info("Cleaning these temp files for downloaded...");
-        final int threadCount = this.taskDomain.getThreadCount();
-        final String tmpDir = ApplicationStore.getTmpDir();
-        for (int i = 0; i < threadCount; i++) {
-            final File file = new File(tmpDir, this.getId() + "_" + i + ".downloading");
-            if (file.exists()) {
-                final boolean deleted = file.delete();
-                if (deleted)
-                    logger.info(file.getAbsolutePath() + " is cleaned.");
-                else
-                    logger.warning(file.getAbsolutePath() + " cannot delete,the file may be occupied.");
+    private synchronized void startTimer() {
+        if (this.timer != null)
+            this.timer.cancel();
+        this.timer = new Timer();
+        this.timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                durationIncrement();
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ignored) {
+                }
             }
-        }
+        }, 0, Thread.NORM_PRIORITY);
     }
 
-    public ThreadPoolExecutor getThreadPool() {
-        return threadPool;
+    public synchronized void stopTimer() {
+        if (this.timer != null)
+            this.timer.cancel();
     }
 
     public DownloadTaskDomain getTaskDomain() {

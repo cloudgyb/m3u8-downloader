@@ -16,7 +16,7 @@ public class DownloadTaskDomain implements Serializable {
     private String url;
     private double progress;
     private volatile int urlTotal;
-    private int urlFinished;
+    private volatile int urlFinished;
     private String urls;
     private int threadCount;
     private volatile int status;

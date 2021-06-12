@@ -4,7 +4,7 @@ import com.github.cloudgyb.m3u8downloader.ApplicationContext;
 import com.github.cloudgyb.m3u8downloader.ApplicationStore;
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskDao;
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskDomain;
-import com.github.cloudgyb.m3u8downloader.model.DownloadTask;
+import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -55,7 +55,7 @@ public class NewDownloadTaskViewController {
         domain.setThreadCount(threadCount);
         taskDao.insert(domain);
 
-        final DownloadTask task = new DownloadTask(domain);
+        final DownloadTaskViewModel task = new DownloadTaskViewModel(domain);
         try {
             task.start();
         } catch (IOException | ExecutionException | InterruptedException e) {

@@ -1,6 +1,6 @@
 package com.github.cloudgyb.m3u8downloader;
 
-import com.github.cloudgyb.m3u8downloader.model.DownloadTask;
+import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
 import com.github.cloudgyb.m3u8downloader.viewcontroller.MainViewController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -68,10 +68,11 @@ public class M3u8DownloaderApp extends Application {
     @Override
     public void stop() {
         System.out.println("stop not finish task....");
-        final List<DownloadTask> noFinishedTasks = ApplicationStore.getNoFinishedTasks();
-        for (DownloadTask noFinishedTask : noFinishedTasks) {
+        final List<DownloadTaskViewModel> noFinishedTasks = ApplicationStore.getNoFinishedTasks();
+        for (DownloadTaskViewModel noFinishedTask : noFinishedTasks) {
             noFinishedTask.stop();
         }
         System.out.println("Close application...");
+        System.exit(0);
     }
 }

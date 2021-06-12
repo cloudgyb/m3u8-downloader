@@ -20,13 +20,14 @@ public class LogFormatter extends SimpleFormatter {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
         Date now = new Date();
         String time = sdf.format(now);
+        final String threadName = Thread.currentThread().getName();
         final Level level = record.getLevel();
         final long sequenceNumber = record.getSequenceNumber();
         final int threadID = record.getThreadID();
         final String message = record.getMessage();
         final String sourceClassName = record.getSourceClassName();
         final String sourceMethodName = record.getSourceMethodName();
-        return String.format("[%s] ThreadID-%s %s %s.%s,%s: %s\n", level.getName(), threadID,
+        return String.format("[%s] %s %s %s.%s,%s: %s\n", level.getName(), threadName,
                 time, sourceClassName, sourceMethodName,sequenceNumber, message);
     }
 }
