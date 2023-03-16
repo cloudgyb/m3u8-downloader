@@ -164,6 +164,7 @@ public class DownloadListViewController {
         List<DownloadTaskViewModel> notFinishTasks = ApplicationStore.getNoFinishedTasks();
         downloadTable.getItems().addAll(notFinishTasks);
         downloadTable.sort();
+        System.out.println("下载列表 init ");
     }
 
     private void setStyleByTaskStatus(Label label, Integer status) {

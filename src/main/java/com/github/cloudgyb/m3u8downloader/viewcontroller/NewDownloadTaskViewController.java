@@ -22,7 +22,6 @@ import java.util.concurrent.ExecutionException;
  */
 public class NewDownloadTaskViewController {
     private final static String urlPattern = "^(http|https)://[A-Za-z0-9-_/.]+\\.m3u8$";
-    private DownloadTaskDao taskDao;
     @FXML
     private TextField urlTextField;
     @FXML
@@ -32,10 +31,12 @@ public class NewDownloadTaskViewController {
     @FXML
     private Slider threadCountSlider;
 
+    private final NewDownloadTaskViewModel viewModel = new NewDownloadTaskViewModel();
+
     public void init() {
-        urlTextField.textProperty().bindBidirectional();
-        this.taskDao = new DownloadTaskDao();
         this.threadCountSlider.setValue(ApplicationStore.getSystemConfig().getDefaultThreadCount());
+        urlTextField.textProperty().bindBidirectional(viewModel.urlProperty());
+        threadCountSlider.valueProperty().bindBidirectional(viewModel.taskMaxThreadCountProperty());
     }
 
     public void downBtnClick() {
@@ -43,24 +44,7 @@ public class NewDownloadTaskViewController {
         boolean is = validateUrl(url);
         if (!is)
             return;
-        final int threadCount = (int) threadCountSlider.getValue();
-        final DownloadTaskDomain domain = new DownloadTaskDomain();
-        domain.setUrl(url);
-        domain.setUrlFinished(0);
-        domain.setStatus(0);
-        domain.setProgress(0);
-        domain.setDuration(0);
-        domain.setCreateTime(new Date());
-        domain.setThreadCount(threadCount);
-        taskDao.insert(domain);
-
-        final DownloadTaskViewModel task = new DownloadTaskViewModel(domain);
-        try {
-            task.start();
-        } catch (IOException | ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-        }
-        ApplicationStore.getNoFinishedTasks().add(task);
+        viewModel.download();
         final TabPane tabs = (TabPane) ApplicationContext.getInstance().get("tabs");
         tabs.getSelectionModel().select(1);
     }
