@@ -26,8 +26,6 @@ public class NewDownloadTaskViewController {
     @FXML
     private TextField urlTextField;
     @FXML
-    private Button downBtn;
-    @FXML
     private CheckBox showAdvOptionCheckBox;
     @FXML
     private HBox advOptionHBox;
@@ -35,6 +33,7 @@ public class NewDownloadTaskViewController {
     private Slider threadCountSlider;
 
     public void init() {
+        urlTextField.textProperty().bindBidirectional();
         this.taskDao = new DownloadTaskDao();
         this.threadCountSlider.setValue(ApplicationStore.getSystemConfig().getDefaultThreadCount());
     }
@@ -42,7 +41,7 @@ public class NewDownloadTaskViewController {
     public void downBtnClick() {
         String url = urlTextField.getText();
         boolean is = validateUrl(url);
-        if(!is)
+        if (!is)
             return;
         final int threadCount = (int) threadCountSlider.getValue();
         final DownloadTaskDomain domain = new DownloadTaskDomain();
@@ -67,12 +66,12 @@ public class NewDownloadTaskViewController {
     }
 
     private boolean validateUrl(String url) {
-        if(url == null || "".equals(url.trim())){
+        if (url == null || "".equals(url.trim())) {
             showAlert("请输入URL！");
             return false;
         }
         final boolean matches = url.matches(urlPattern);
-        if(!matches){
+        if (!matches) {
             showAlert("输入的URL不合法或者不支持！");
             return false;
         }
@@ -89,7 +88,7 @@ public class NewDownloadTaskViewController {
         urlErrAlert.setHeaderText(msg);
         //urlErrAlert.setContentText(msg);
         final Optional<ButtonType> buttonType = urlErrAlert.showAndWait();
-        if(buttonType.isPresent() && buttonType.get().equals(ButtonType.OK)){
+        if (buttonType.isPresent() && buttonType.get().equals(ButtonType.OK)) {
             urlErrAlert.close();
         }
     }
