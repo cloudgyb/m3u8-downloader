@@ -21,15 +21,21 @@ import java.util.stream.Collectors;
 
 import static com.github.cloudgyb.m3u8downloader.util.URLUtil.addUrlSchemePrefixIfNeed;
 
+/**
+ * M3U8 索引文件解析工具类
+ *
+ * @author cloudgyb
+ * @since 2.0.0
+ */
 public class M3U8Parser {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public List<String> playlistParse(String url) {
+    public List<com.github.cloudgyb.m3u8downloader.m3u8.MediaSegment> playlistParse(String url) {
         List<String> masterPlaylist;
-        List<String> mediaPlaylist = new ArrayList<>();
+        List<com.github.cloudgyb.m3u8downloader.m3u8.MediaSegment> mediaSegments = new ArrayList<>();
         try {
             logger.info("开始尝试解析{}为主播放列表", url);
-            masterPlaylist = masterPlaylistParse(url);
+            masterPlaylist = masterPlaylistUrlParse(url);
             logger.info("尝试解析{}为主播放列表完成，包含{}个播放列表！", url, masterPlaylist.size());
         } catch (PlaylistParserException e) {
             logger.error("尝试解析{}为主播放列表失败！{}", url, e.getClass());
@@ -42,7 +48,38 @@ public class M3U8Parser {
         for (String mpl : masterPlaylist) {
             try {
                 logger.info("开始尝试解析{}为媒体播放列表...", mpl);
-                List<String> mediaPlaylistUrls = mediaPlaylistParse(mpl);
+                List<com.github.cloudgyb.m3u8downloader.m3u8.MediaSegment> mediaPlaylistUrls = mediaPlaylistParse(mpl);
+                mediaSegments.addAll(mediaPlaylistUrls);
+            } catch (PlaylistParserException e) {
+                logger.error("尝试解析{}为媒体播放列表失败！{}", mpl, e.getClass());
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        logger.info("解析为媒体播放列表，一共{}个媒体片段！", mediaSegments.size());
+        return mediaSegments;
+    }
+
+    @SuppressWarnings("unused")
+    public List<String> playlistUrlParse(String url) {
+        List<String> masterPlaylist;
+        List<String> mediaPlaylist = new ArrayList<>();
+        try {
+            logger.info("开始尝试解析{}为主播放列表", url);
+            masterPlaylist = masterPlaylistUrlParse(url);
+            logger.info("尝试解析{}为主播放列表完成，包含{}个播放列表！", url, masterPlaylist.size());
+        } catch (PlaylistParserException e) {
+            logger.error("尝试解析{}为主播放列表失败！{}", url, e.getClass());
+            // 作为媒体播放列表进行处理
+            masterPlaylist = Collections.singletonList(url);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        logger.info("开始尝试解析为媒体播放列表...");
+        for (String mpl : masterPlaylist) {
+            try {
+                logger.info("开始尝试解析{}为媒体播放列表...", mpl);
+                List<String> mediaPlaylistUrls = mediaPlaylistUrlParse(mpl);
                 mediaPlaylist.addAll(mediaPlaylistUrls);
             } catch (PlaylistParserException e) {
                 logger.error("尝试解析{}为媒体播放列表失败！{}", mpl, e.getClass());
@@ -54,15 +91,13 @@ public class M3U8Parser {
         return mediaPlaylist;
     }
 
-    public List<String> masterPlaylistParse(String url) throws IOException, InterruptedException {
+    public List<String> masterPlaylistUrlParse(String url) throws IOException, InterruptedException {
         String baseUrl = URLUtil.getBaseUrl(url);
         MasterPlaylistParser parser = new MasterPlaylistParser();
         InputStream inputStream = HttpClientUtil.getAsInputStream(url);
         List<String> masterPlaylistUrls = null;
         // Parse playlist
         MasterPlaylist playlist = parser.readPlaylist(inputStream);
-        String s = parser.writePlaylistAsString(playlist);
-        System.out.println(s);
         List<Variant> variants = playlist.variants();
         if (variants != null) {
             masterPlaylistUrls = variants.stream()
@@ -73,7 +108,7 @@ public class M3U8Parser {
         return masterPlaylistUrls;
     }
 
-    public List<String> mediaPlaylistParse(String url) throws IOException, InterruptedException {
+    public List<String> mediaPlaylistUrlParse(String url) throws IOException, InterruptedException {
         String baseUrl = URLUtil.getBaseUrl(url);
         MediaPlaylistParser parser = new MediaPlaylistParser();
         InputStream inputStream = HttpClientUtil.getAsInputStream(url);
@@ -90,11 +125,25 @@ public class M3U8Parser {
         return mediaPlaylistUrls;
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        //https://vip.lz-cdn.com/20221108/37027_45aaee1b/index.m3u8?sign=8310ba9275b6d752399a985e3b756bed
-        //https://vip.lz-cdn.com/20221108/37027_45aaee1b/1200k/hls/index.m3u8
-        //new M3U8Parser().masterPlaylistParse("https://vip.lz-cdn.com/20221108/37027_45aaee1b/index.m3u8?sign=8310ba9275b6d752399a985e3b756bed");
-        //new M3U8Parser().playlistParse("https://vip.lz-cdn.com/20221108/37027_45aaee1b/1200k/hls/index.m3u8");
-        new M3U8Parser().playlistParse("https://vip.lz-cdn.com/20221108/37027_45aaee1b/index.m3u8?sign=8310ba9275b6d752399a985e3b756bed");
+    public List<com.github.cloudgyb.m3u8downloader.m3u8.MediaSegment> mediaPlaylistParse(String url)
+            throws IOException, InterruptedException {
+        String baseUrl = URLUtil.getBaseUrl(url);
+        MediaPlaylistParser parser = new MediaPlaylistParser();
+        InputStream inputStream = HttpClientUtil.getAsInputStream(url);
+        // Parse playlist
+        MediaPlaylist playlist = parser.readPlaylist(inputStream);
+        List<MediaSegment> rawMediaSegments = playlist.mediaSegments();
+        ArrayList<com.github.cloudgyb.m3u8downloader.m3u8.MediaSegment> mediaSegments = new ArrayList<>();
+        if (rawMediaSegments != null) {
+            rawMediaSegments.forEach(ms -> {
+                String uri = ms.uri();
+                double duration = ms.duration();
+                String fullUrl = addUrlSchemePrefixIfNeed(baseUrl, uri);
+                com.github.cloudgyb.m3u8downloader.m3u8.MediaSegment mediaSegment = new
+                        com.github.cloudgyb.m3u8downloader.m3u8.MediaSegment(fullUrl, duration);
+                mediaSegments.add(mediaSegment);
+            });
+        }
+        return mediaSegments;
     }
 }

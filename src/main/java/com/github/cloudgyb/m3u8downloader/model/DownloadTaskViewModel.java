@@ -2,17 +2,23 @@ package com.github.cloudgyb.m3u8downloader.model;
 
 import com.github.cloudgyb.m3u8downloader.ApplicationStore;
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskDomain;
+import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStageEnum;
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStatusEnum;
-import com.github.cloudgyb.m3u8downloader.download.DownloadTask;
+import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
+import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
+import com.github.cloudgyb.m3u8downloader.download.TaskDownloadThreadManager;
+import com.github.cloudgyb.m3u8downloader.event.DownloadTaskStatusChangeEvent;
+import com.github.cloudgyb.m3u8downloader.event.DownloadTaskStatusChangeEventNotifier;
+import com.github.cloudgyb.m3u8downloader.event.Event;
+import com.github.cloudgyb.m3u8downloader.event.EventAware;
 import com.github.cloudgyb.m3u8downloader.util.DateFormatter;
+import com.github.cloudgyb.m3u8downloader.util.SpringBeanUtil;
 import javafx.beans.property.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Logger;
 
 /**
  * 下载任务视图模型，包装了{@link DownloadTaskDomain},
@@ -21,79 +27,66 @@ import java.util.logging.Logger;
  * @author cloudgyb
  * 2021/5/16 18:55
  */
-public class DownloadTaskViewModel {
-    private final Logger logger = Logger.getLogger(DownloadTaskViewModel.class.getSimpleName());
-
+@SuppressWarnings("unused")
+public class DownloadTaskViewModel implements EventAware {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final IntegerProperty id = new SimpleIntegerProperty();
     private final StringProperty url = new SimpleStringProperty();
     private final StringProperty createTime = new SimpleStringProperty();
     private final StringProperty duration = new SimpleStringProperty();
-    private final DoubleProperty progress = new SimpleDoubleProperty(0.0);
-    private final StringProperty statusText = new SimpleStringProperty();
-    private final IntegerProperty status = new SimpleIntegerProperty();
-
-    private final DownloadTaskDomain taskDomain;
-    private volatile DownloadTask downloadTask;
-
+    private final ObjectProperty<ProgressAndStatus> progressAndStatus = new SimpleObjectProperty<>();
+    private final DownloadTaskEntity taskDomain;
+    private final TaskDownloadThreadManager taskDownloadThreadManager = TaskDownloadThreadManager.getInstance();
     //计时器，用于下载时间计时
     private Timer timer;
-
+    private final DownloadTaskService downloadTaskService = SpringBeanUtil.getBean(DownloadTaskService.class);
 
     /**
      * 构造一个下载任务视图模型
-     *
-     * @param downloadTaskDomain 该参数包含了下载所需的所有参数配置
-     */
-    public DownloadTaskViewModel(DownloadTaskDomain downloadTaskDomain) {
-        this.taskDomain = downloadTaskDomain;
-
+     **/
+    public DownloadTaskViewModel(DownloadTaskEntity entity) {
+        this.taskDomain = entity;
         this.init();
+        // 订阅任务状态变更时间
+        DownloadTaskStatusChangeEventNotifier eventNotifier = DownloadTaskStatusChangeEventNotifier.INSTANCE;
+        eventNotifier.subscribe(this);
     }
 
     //视图模型初始化
     private void init() {
-        this.setId(this.taskDomain.getId());
-        this.setUrl(this.taskDomain.getUrl());
-        this.setCreateTime(this.taskDomain.getCreateTimeText());
-        this.setStatus(this.taskDomain.getStatus());
-        final int status = this.taskDomain.getStatus();
-        if (status == DownloadTaskStatusEnum.FAILED.getStatus())
-            this.setStatusText("失败");
-        else if (status == DownloadTaskStatusEnum.NEW.getStatus())
-            this.setStatusText("0%");
-        else if (status == DownloadTaskStatusEnum.STOPPED.getStatus())
-            this.setStatusText("已停止");
-        this.setDuration(this.taskDomain.getDuration());
+        this.id.set(this.taskDomain.getId());
+        this.url.set(this.taskDomain.getUrl());
+        this.createTime.set(DateFormatter.format(this.taskDomain.getCreateTime()));
+        String statusText = this.taskDomain.getStage();
+        String status = this.taskDomain.getStatus();
+        DownloadTaskStatusEnum statusEnum = DownloadTaskStatusEnum.valueOf(status);
+        if (statusEnum == DownloadTaskStatusEnum.RUNNING) {
+            statusEnum = DownloadTaskStatusEnum.STOPPED_ERROR;
+        }
+        DownloadTaskStageEnum stage = DownloadTaskStageEnum.valueOf(statusText);
+        Integer finishMediaSegment = this.taskDomain.getFinishMediaSegment();
+        Integer totalMediaSegment = this.taskDomain.getTotalMediaSegment();
+        double progressValue = totalMediaSegment == 0 ? 0D : (double) finishMediaSegment / totalMediaSegment;
+        this.progressAndStatus.set(new ProgressAndStatus(statusEnum, progressValue, stage));
+        this.setDuration(this.taskDomain.getDownloadDuration());
     }
 
-    public synchronized void start() throws IOException, ExecutionException, InterruptedException {
-        if (this.getStatus() == DownloadTaskStatusEnum.RUNNING.getStatus()) {
-            return;
-        }
-        this.setProgress(0.0);
-        this.setDuration(0L); //重置计时
-        //重新创建下载线程
-        this.downloadTask = new DownloadTask(this);
-        this.downloadTask.start();
+    public void start() {
+        taskDownloadThreadManager.startDownloadThread(this.taskDomain);
         this.startTimer();
     }
 
 
-    public synchronized void stop() {
-        //只是设置一个状态，当下载线程获取到该状态后会自动停止
-        this.setStatus(DownloadTaskStatusEnum.STOPPING.getStatus());
-        this.setStatusText("正在停止...");
-        if(this.downloadTask != null)
-            this.downloadTask.interrupt();
+    public void stop() {
+        taskDownloadThreadManager.stopDownloadThread(this.taskDomain);
         stopTimer();
     }
 
-    public synchronized void remove() {
-        if (this.getStatus() == DownloadTaskStatusEnum.RUNNING.getStatus())
+    public void remove() {
+        if (DownloadTaskStageEnum.isRunning(this.progressAndStatus.get().getStage()))
             this.stop();
         ApplicationStore.getNoFinishedTasks().remove(this);
-        if(this.downloadTask != null)
-            this.downloadTask.interrupt();
+        downloadTaskService.deleteById(taskDomain.getId());
         stopTimer();
     }
 
@@ -123,59 +116,6 @@ public class DownloadTaskViewModel {
             this.timer.cancel();
     }
 
-    public DownloadTaskDomain getTaskDomain() {
-        return taskDomain;
-    }
-
-    public void setFinishTime(Date finishTime) {
-        this.taskDomain.setFinishTime(finishTime);
-    }
-
-    public Integer getUrlTotal() {
-        return this.taskDomain.getUrlTotal();
-    }
-
-    public void setUrlTotal(Integer urlTotal) {
-        this.taskDomain.setUrlTotal(urlTotal);
-    }
-
-    public Integer getStatus() {
-        return this.taskDomain.getStatus();
-    }
-
-    public void setStatus(Integer status) {
-        this.taskDomain.setStatus(status);
-        this.status.set(status);
-    }
-
-    public IntegerProperty statusProperty() {
-        return this.status;
-    }
-
-    public String getStatusText() {
-        return statusText.getValue();
-    }
-
-    public void setStatusText(String mess) {
-        this.statusText.set(mess);
-    }
-
-    public StringProperty statusTextProperty() {
-        return this.statusText;
-    }
-
-    private void setId(int id) {
-        this.id.set(id);
-    }
-
-    public Integer getId() {
-        return this.taskDomain.getId();
-    }
-
-    public IntegerProperty idProperty() {
-        return this.id;
-    }
-
     public void setUrl(String url) {
         this.url.set(url);
     }
@@ -184,62 +124,17 @@ public class DownloadTaskViewModel {
         return this.taskDomain.getUrl();
     }
 
-    public StringProperty urlProperty() {
-        return this.url;
-    }
-
-
-    public Integer getThreadCount() {
-        return this.taskDomain.getThreadCount();
-    }
-
-    public String getCreateTime() {
-        final Date createTime = this.taskDomain.getCreateTime();
-        return DateFormatter.format(createTime);
-    }
-
-    public void setCreateTime(String createTime) {
-        this.createTime.set(createTime);
-    }
-
-    public StringProperty createTimeProperty() {
-        return this.createTime;
-    }
-
-    public String getDuration() {
-        final long duration = this.taskDomain.getDuration();
-        return duration + "";
+    public DownloadTaskStatusEnum getStatus() {
+        return this.progressAndStatus.get().getStatus();
     }
 
     public void setDuration(Long duration) {
-        this.taskDomain.setDuration(duration);
-        this.duration.set(this.formatTime(duration));
+        this.duration.set(DateFormatter.toDurationText(duration));
     }
-
-    public StringProperty durationProperty() {
-        return this.duration;
-    }
-
 
     public void durationIncrement() {
-        long duration = this.taskDomain.getDuration() + 1;
+        long duration = this.taskDomain.getDownloadDuration() + 1;
         this.setDuration(duration);
-    }
-
-    public DoubleProperty progressProperty() {
-        return this.progress;
-    }
-
-    public void setProgress(Double progress) {
-        if (progress == 1.0) {
-            this.taskDomain.setStatus(DownloadTaskStatusEnum.FINISHED.getStatus());
-            this.status.setValue(DownloadTaskStatusEnum.FINISHED.getStatus());
-        }
-        String text = String.format("%2.2f", progress * 100) + "%";
-        //状态和进度是一列，所以这里也要更新状态文本
-        this.setStatusText(text);
-        this.taskDomain.setProgress(progress);
-        this.progress.set(progress);
     }
 
     @Override
@@ -247,10 +142,53 @@ public class DownloadTaskViewModel {
         return this.taskDomain.toString();
     }
 
-    private String formatTime(long time) {
-        long h = time / 3600;
-        long m = time / 60;
-        long s = time % 60;
-        return String.format("%02d:%02d:%02d", h, m, s);
+    public int getId() {
+        return id.get();
+    }
+
+    public IntegerProperty idProperty() {
+        return id;
+    }
+
+    public StringProperty urlProperty() {
+        return url;
+    }
+
+    public String getCreateTime() {
+        return createTime.get();
+    }
+
+    public StringProperty createTimeProperty() {
+        return createTime;
+    }
+
+    public String getDuration() {
+        return duration.get();
+    }
+
+    public StringProperty durationProperty() {
+        return duration;
+    }
+
+    public ProgressAndStatus getProgressAndStatus() {
+        return progressAndStatus.get();
+    }
+
+    public ObjectProperty<ProgressAndStatus> progressAndStatusProperty() {
+        return progressAndStatus;
+    }
+
+    @Override
+    public void notify(Event e) {
+        if (e instanceof DownloadTaskStatusChangeEvent) {
+            DownloadTaskStatusChangeEvent event = (DownloadTaskStatusChangeEvent) e;
+            int tid = event.getTid();
+            // 是否是该任务
+            if (tid != this.taskDomain.getId())
+                return;
+            ProgressAndStatus progressAndStatus1 = event.getProgressAndStatus();
+            logger.info("接收到任务状态变更通知：{}", progressAndStatus1.toString());
+            this.progressAndStatus.setValue(progressAndStatus1);
+        }
     }
 }

@@ -1,0 +1,6 @@
+spring:
+  datasource:
+    driver-class-name: org.sqlite.JDBC
+    username:
+    password:
+    url: jdbc:sqlite:D:/IdeaProjects/m3u8-downloader/data.db

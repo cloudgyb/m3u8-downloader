@@ -6,16 +6,21 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import org.kordamp.bootstrapfx.BootstrapFX;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.LogManager;
+
+import static com.github.cloudgyb.m3u8downloader.viewcontroller.BootstrapStyle.*;
 
 /**
  * APP entrypoint
@@ -23,6 +28,7 @@ import java.util.logging.LogManager;
  * @author cloudgyb
  * 2021/5/15 18:31
  */
+@SpringBootApplication
 public class M3u8DownloaderApp extends Application {
     static {
         final LogManager logManager = LogManager.getLogManager();
@@ -51,6 +57,14 @@ public class M3u8DownloaderApp extends Application {
             Alert exitConfirm = new Alert(Alert.AlertType.CONFIRMATION);
             exitConfirm.setTitle("提示");
             exitConfirm.setHeaderText("确定退出吗？");
+            // Load the image
+            Image icon = new Image("/icon.png");
+            Stage stage = (Stage) exitConfirm.getDialogPane().getScene().getWindow();
+            stage.getIcons().add(icon); // 设置图标
+            Button okButton = (Button) exitConfirm.getDialogPane().lookupButton(ButtonType.OK);
+            okButton.setStyle(btnXsStyle + btnDangerStyle);
+            Button cancelButton = (Button) exitConfirm.getDialogPane().lookupButton(ButtonType.CANCEL);
+            cancelButton.setStyle(btnXsStyle + btnPrimaryStyle);
             Optional<ButtonType> result = exitConfirm.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
                 primaryStage.close();
@@ -62,6 +76,7 @@ public class M3u8DownloaderApp extends Application {
     }
 
     public static void main(String[] args) {
+        SpringApplication.run(M3u8DownloaderApp.class);
         launch(args);
     }
 

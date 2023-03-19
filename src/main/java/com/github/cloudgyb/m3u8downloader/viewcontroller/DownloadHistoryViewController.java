@@ -1,14 +1,13 @@
 package com.github.cloudgyb.m3u8downloader.viewcontroller;
 
-import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskDao;
-import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskDomain;
-import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStatusEnum;
+import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
+import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
+import com.github.cloudgyb.m3u8downloader.util.SpringBeanUtil;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
-import javafx.util.Callback;
 
 import java.io.File;
 import java.util.List;
@@ -22,53 +21,35 @@ import java.util.logging.Logger;
  */
 public class DownloadHistoryViewController {
     private final Logger logger = Logger.getLogger(DownloadHistoryViewController.class.getSimpleName());
-    private final DownloadTaskDao downloadTaskDao = new DownloadTaskDao();
+    private final DownloadTaskService downloadTaskService = SpringBeanUtil.getBean(DownloadTaskService.class);
     @FXML
-    private TableView<DownloadTaskDomain> downloadHistoryTable;
+    private TableView<DownloadTaskEntity> downloadHistoryTable;
     @FXML
-    private TableColumn<DownloadTaskDomain, Object> idColumn;
+    private TableColumn<DownloadTaskEntity, Object> idColumn;
     @FXML
-    private TableColumn<DownloadTaskDomain, Object> urlColumn;
+    private TableColumn<DownloadTaskEntity, Object> urlColumn;
     @FXML
-    private TableColumn<DownloadTaskDomain, Object> createTimeColumn;
+    private TableColumn<DownloadTaskEntity, Object> createTimeColumn;
     @FXML
-    private TableColumn<DownloadTaskDomain, Object> finishTimeColumn;
+    private TableColumn<DownloadTaskEntity, Object> finishTimeColumn;
     @FXML
-    private TableColumn<DownloadTaskDomain, Object> durationColumn;
+    private TableColumn<DownloadTaskEntity, Object> durationColumn;
     @FXML
-    private TableColumn<DownloadTaskDomain, Object> operaColumn;
+    private TableColumn<DownloadTaskEntity, Object> operaColumn;
 
     public void init() {
-        final List<DownloadTaskDomain> downloadHistoryList = downloadTaskDao.selectByStatus(DownloadTaskStatusEnum.FINISHED.getStatus());
+        List<DownloadTaskEntity> allFinishedTask = downloadTaskService.getAllFinishedTask();
         downloadHistoryTable.setRowFactory(p -> {
-            final TableRow<DownloadTaskDomain> objectTableRow = new TableRow<>();
+            final TableRow<DownloadTaskEntity> objectTableRow = new TableRow<>();
             objectTableRow.setStyle("-fx-pref-height: 50px");
             return objectTableRow;
         });
         downloadHistoryTable.getSortOrder().add(finishTimeColumn);
-        Callback<TableColumn<DownloadTaskDomain, Object>,
-                TableCell<DownloadTaskDomain, Object>> defaultCellFactory = v -> {
-            final TableCell<DownloadTaskDomain, Object> cell = new TableCell<>() {
-                @Override
-                public void updateItem(Object item, boolean empty) {
-                    if (item != null) {
-                        setText(item.toString());
-                    }
-                }
-            };
-            cell.setAlignment(Pos.CENTER);
-            return cell;
-        };
-
+        // 绑定属性
         idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
-        idColumn.setCellFactory(defaultCellFactory);
         urlColumn.setCellValueFactory(new PropertyValueFactory<>("url"));
-        urlColumn.setCellFactory(defaultCellFactory);
         createTimeColumn.setCellValueFactory(new PropertyValueFactory<>("createTimeText"));
-        createTimeColumn.setCellFactory(defaultCellFactory);
-        finishTimeColumn.setCellFactory(defaultCellFactory);
         finishTimeColumn.setCellValueFactory(new PropertyValueFactory<>("finishTimeText"));
-        durationColumn.setCellFactory(defaultCellFactory);
         durationColumn.setCellValueFactory(new PropertyValueFactory<>("durationText"));
 
         operaColumn.setCellFactory(v -> new TableCell<>() {
@@ -97,14 +78,14 @@ public class DownloadHistoryViewController {
                 }
             }
         });
-        this.downloadHistoryTable.getItems().addAll(downloadHistoryList);
+        this.downloadHistoryTable.getItems().addAll(allFinishedTask);
         this.downloadHistoryTable.sort();
     }
 
 
     private void openFile(int index) {
-        final DownloadTaskDomain downloadTaskDomain = this.downloadHistoryTable.getItems().get(index);
-        final String filePath = downloadTaskDomain.getFilePath();
+        final DownloadTaskEntity task = this.downloadHistoryTable.getItems().get(index);
+        final String filePath = task.getFilePath();
         final File file = new File(filePath);
         if (file.exists()) {
             try {
@@ -120,8 +101,8 @@ public class DownloadHistoryViewController {
     }
 
     private void playFile(int index) {
-        final DownloadTaskDomain downloadTaskDomain = this.downloadHistoryTable.getItems().get(index);
-        final String filePath = downloadTaskDomain.getFilePath();
+        final DownloadTaskEntity task = this.downloadHistoryTable.getItems().get(index);
+        final String filePath = task.getFilePath();
         System.out.println("play video path is " + filePath);
         try {
             Runtime.getRuntime().exec("cmd /c start " + filePath);
@@ -135,20 +116,20 @@ public class DownloadHistoryViewController {
     }
 
     private void deleteFileAndTask(int index) {
-        final DownloadTaskDomain downloadTaskDomain = this.downloadHistoryTable.getItems().get(index);
-        final String filePath = downloadTaskDomain.getFilePath();
+        final DownloadTaskEntity task = this.downloadHistoryTable.getItems().get(index);
+        final String filePath = task.getFilePath();
         if (filePath != null) {
             final File file = new File(filePath);
             if (file.exists()) {
                 final boolean delete = file.delete();
-                if(delete){
-                    logger.info(filePath+" is deleted!");
-                }else {
-                    logger.warning("Failed to delete file "+filePath);
+                if (delete) {
+                    logger.info(filePath + " is deleted!");
+                } else {
+                    logger.warning("Failed to delete file " + filePath);
                 }
             }
         }
-        downloadTaskDao.deleteById(downloadTaskDomain.getId());
+        downloadTaskService.deleteById(task.getId());
         downloadHistoryTable.getItems().remove(index);
     }
 
