@@ -112,7 +112,8 @@ public class TaskDownloadThread extends Thread {
             downloadTaskService.updateById(task);
             publishStatus(DownloadTaskStatusEnum.FINISHED, 100.0, DownloadTaskStageEnum.FINISHED);
         } finally {
-            logger.info("下载线程终止退出！");
+            String reason = isStopped.get() ? "手动停止" : "下载完成";
+            logger.info("任务(ID:{})下载线程终止退出({})！", task.getId(), reason);
         }
     }
 
@@ -154,6 +155,9 @@ public class TaskDownloadThread extends Thread {
             // 下载片段
             ArrayList<Future<MediaSegmentEntity>> futures = new ArrayList<>();
             Integer maxThreadCount = task.getMaxThreadCount();
+            maxThreadCount = maxThreadCount == 0 ?
+                    ApplicationStore.getSystemConfig().getDefaultThreadCount() : maxThreadCount;
+            logger.info("使用最大{}个线程去下载任务（ID:{}）", maxThreadCount, tid);
             for (; ; ) {
                 if (isStopped.get()) {
                     return;
@@ -167,6 +171,9 @@ public class TaskDownloadThread extends Thread {
                     Future<MediaSegmentEntity> future = threadPool.submit(() -> {
                         long staterTime = System.currentTimeMillis();
                         String url = mediaSegmentEntity.getUrl();
+                        if (logger.isInfoEnabled()) {
+                            logger.info("开始下载任务(ID:{})媒体片段{}", mediaSegmentEntity.getTaskId(), url);
+                        }
                         InputStream inputStream = HttpClientUtil.getAsInputStream(url);
                         final File parent = new File(ApplicationStore.getTmpDir());
                         final File tempFile = new File(parent, mediaSegmentEntity.getId().toString());
@@ -177,6 +184,9 @@ public class TaskDownloadThread extends Thread {
                         long endTime = System.currentTimeMillis();
                         mediaSegmentEntity.setDownloadDuration(endTime - staterTime);
                         mediaSegmentService.updateById(mediaSegmentEntity);
+                        if (logger.isInfoEnabled()) {
+                            logger.info("任务(ID:{})媒体片段下载完成{}", mediaSegmentEntity.getTaskId(), url);
+                        }
                         return mediaSegmentEntity;
                     });
                     futures.add(future);

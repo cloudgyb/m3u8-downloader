@@ -7,11 +7,15 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
+import javafx.util.Callback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * 下载历史tab页视图控制器
@@ -20,7 +24,7 @@ import java.util.logging.Logger;
  * 2021/5/19 10:25
  */
 public class DownloadHistoryViewController {
-    private final Logger logger = Logger.getLogger(DownloadHistoryViewController.class.getSimpleName());
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final DownloadTaskService downloadTaskService = SpringBeanUtil.getBean(DownloadTaskService.class);
     @FXML
     private TableView<DownloadTaskEntity> downloadHistoryTable;
@@ -36,20 +40,50 @@ public class DownloadHistoryViewController {
     private TableColumn<DownloadTaskEntity, Object> durationColumn;
     @FXML
     private TableColumn<DownloadTaskEntity, Object> operaColumn;
+    private final Callback<TableView<DownloadTaskEntity>, TableRow<DownloadTaskEntity>> rowFactory = p -> {
+        final TableRow<DownloadTaskEntity> tableRow = new TableRow<>();
+        tableRow.setStyle("-fx-pref-height: 50px");
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem copyUrlMenuItem = new MenuItem("复制url");
+        copyUrlMenuItem.setOnAction(event -> {
+            DownloadTaskEntity item = tableRow.getItem();
+            String url = item.getUrl();
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            // 创建一个包含字符串数据的剪切板内容
+            ClipboardContent content = new ClipboardContent();
+            content.putString(url);
+            // 将内容设置到剪贴板
+            clipboard.setContent(content);
+            logger.info("复制{}到剪贴板", url);
+        });
+        contextMenu.getItems().add(copyUrlMenuItem);
+        tableRow.setContextMenu(contextMenu);
+        return tableRow;
+    };
+    private final Callback<TableColumn<DownloadTaskEntity, Object>, TableCell<DownloadTaskEntity, Object>> cellFactory = column -> new TableCell<>() {
+        @Override
+        protected void updateItem(Object o, boolean b) {
+            super.updateItem(o, b);
+            if (o != null) {
+                setText(o.toString());
+                setTooltip(new Tooltip(o.toString()));
+            }
+        }
+    };
 
     public void init() {
         List<DownloadTaskEntity> allFinishedTask = downloadTaskService.getAllFinishedTask();
-        downloadHistoryTable.setRowFactory(p -> {
-            final TableRow<DownloadTaskEntity> objectTableRow = new TableRow<>();
-            objectTableRow.setStyle("-fx-pref-height: 50px");
-            return objectTableRow;
-        });
+        downloadHistoryTable.setRowFactory(rowFactory);
         downloadHistoryTable.getSortOrder().add(finishTimeColumn);
         // 绑定属性
         idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
+        urlColumn.setCellFactory(cellFactory);
         urlColumn.setCellValueFactory(new PropertyValueFactory<>("url"));
+        createTimeColumn.setCellFactory(cellFactory);
         createTimeColumn.setCellValueFactory(new PropertyValueFactory<>("createTimeText"));
+        finishTimeColumn.setCellFactory(cellFactory);
         finishTimeColumn.setCellValueFactory(new PropertyValueFactory<>("finishTimeText"));
+        durationColumn.setCellFactory(cellFactory);
         durationColumn.setCellValueFactory(new PropertyValueFactory<>("durationText"));
 
         operaColumn.setCellFactory(v -> new TableCell<>() {
@@ -125,7 +159,7 @@ public class DownloadHistoryViewController {
                 if (delete) {
                     logger.info(filePath + " is deleted!");
                 } else {
-                    logger.warning("Failed to delete file " + filePath);
+                    logger.warn("Failed to delete file " + filePath);
                 }
             }
         }
