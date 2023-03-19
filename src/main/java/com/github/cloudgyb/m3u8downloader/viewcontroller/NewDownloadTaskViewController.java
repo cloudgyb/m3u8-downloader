@@ -2,17 +2,11 @@ package com.github.cloudgyb.m3u8downloader.viewcontroller;
 
 import com.github.cloudgyb.m3u8downloader.ApplicationContext;
 import com.github.cloudgyb.m3u8downloader.ApplicationStore;
-import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskDao;
-import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskDomain;
-import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 
-import java.io.IOException;
-import java.util.Date;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 /**
  * 新建下载任务视图控制器
