@@ -11,7 +11,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 @TableName("media_segment")
 @SuppressWarnings("unused")
 public class MediaSegmentEntity {
-    @TableId(type = IdType.ASSIGN_ID)
+    @TableId(type = IdType.AUTO)
     private Integer id;
     private Integer taskId;
     private String url;

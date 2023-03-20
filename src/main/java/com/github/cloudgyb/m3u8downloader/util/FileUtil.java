@@ -42,4 +42,16 @@ public final class FileUtil {
             }
         }
     }
+
+    public static void ensureDirExist(File tempDir) {
+        if (!tempDir.exists()) {
+            logger.warn("目录{}不存在，创建它", tempDir.getAbsolutePath());
+            boolean isCreate = tempDir.mkdirs();
+            if (isCreate) {
+                logger.info("目录{}已创建", tempDir.getAbsolutePath());
+            } else {
+                logger.error("目录{}创建失败", tempDir.getAbsolutePath());
+            }
+        }
+    }
 }
