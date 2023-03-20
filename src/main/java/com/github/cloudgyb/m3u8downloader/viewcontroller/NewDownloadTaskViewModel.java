@@ -72,7 +72,11 @@ public class NewDownloadTaskViewModel {
         domain.setDownloadDuration(0L);
         domain.setFinishMediaSegment(0);
         domain.setTotalMediaSegment(0);
-        domain.setMaxThreadCount(Double.valueOf(getTaskMaxThreadCount()).intValue());
+        int maxThread = Double.valueOf(getTaskMaxThreadCount()).intValue();
+        if (maxThread == 0) {
+            maxThread = ApplicationStore.getSystemConfig().getDefaultThreadCount();
+        }
+        domain.setMaxThreadCount(maxThread);
         domain.setStage(DownloadTaskStageEnum.NEW.name());
         domain.setStatus(DownloadTaskStageEnum.NEW.name());
         return domain;
