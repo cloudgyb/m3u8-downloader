@@ -1,7 +1,6 @@
 package com.github.cloudgyb.m3u8downloader.model;
 
 import com.github.cloudgyb.m3u8downloader.ApplicationStore;
-import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskDomain;
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStageEnum;
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStatusEnum;
 import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
@@ -21,7 +20,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 /**
- * 下载任务视图模型，包装了{@link DownloadTaskDomain},
+ * 下载任务视图模型
  * 所有下载状态的更新都同步到该类，状态的获取来自此类
  *
  * @author cloudgyb

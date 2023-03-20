@@ -175,8 +175,8 @@ public class TaskDownloadThread extends Thread {
                             logger.info("开始下载任务(ID:{})媒体片段{}", mediaSegmentEntity.getTaskId(), url);
                         }
                         InputStream inputStream = HttpClientUtil.getAsInputStream(url);
-                        final File parent = new File(ApplicationStore.getTmpDir());
-                        final File tempFile = new File(parent, mediaSegmentEntity.getId().toString());
+                        final File tempDir = new File(ApplicationStore.getTmpDir(), System.currentTimeMillis() + "");
+                        final File tempFile = new File(tempDir, mediaSegmentEntity.getId().toString() + ".ts");
                         FileOutputStream fos = new FileOutputStream(tempFile);
                         DataStreamUtil.copy(inputStream, fos, true, true);
                         mediaSegmentEntity.setFinished(true);
