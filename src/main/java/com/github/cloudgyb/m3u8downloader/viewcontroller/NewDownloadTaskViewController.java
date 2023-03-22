@@ -4,8 +4,11 @@ import com.github.cloudgyb.m3u8downloader.ApplicationContext;
 import com.github.cloudgyb.m3u8downloader.ApplicationStore;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
+import javafx.stage.Stage;
 
+import java.net.URI;
 import java.util.Optional;
 
 /**
@@ -15,7 +18,6 @@ import java.util.Optional;
  * 2021/5/16 18:15
  */
 public class NewDownloadTaskViewController {
-    private final static String urlPattern = "^(http|https)://[A-Za-z0-9-_/.]+\\.m3u8$";
     @FXML
     private TextField urlTextField;
     @FXML
@@ -48,9 +50,16 @@ public class NewDownloadTaskViewController {
             showAlert("请输入URL！");
             return false;
         }
-        final boolean matches = url.matches(urlPattern);
-        if (!matches) {
-            showAlert("输入的URL不合法或者不支持！");
+        try {
+            URI uri = URI.create(url);
+            String scheme = uri.getScheme();
+            String path = uri.getPath();
+            if ((!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) || !path.endsWith(".m3u8")) {
+                showAlert("输入的 URL 不是一个正确的 m3u8 地址！");
+                return false;
+            }
+        } catch (Exception ignore) {
+            showAlert("输入的URL不合法！");
             return false;
         }
         return true;
@@ -63,6 +72,9 @@ public class NewDownloadTaskViewController {
 
     private void showAlert(String msg) {
         final Alert urlErrAlert = new Alert(Alert.AlertType.WARNING);
+        Image icon = new Image("/icon.png");
+        Stage stage = (Stage) urlErrAlert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(icon); // 设置图标
         urlErrAlert.setHeaderText(msg);
         //urlErrAlert.setContentText(msg);
         final Optional<ButtonType> buttonType = urlErrAlert.showAndWait();
