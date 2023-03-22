@@ -6,18 +6,13 @@ import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStatusEnum;
 import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
 import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
 import com.github.cloudgyb.m3u8downloader.download.TaskDownloadThreadManager;
-import com.github.cloudgyb.m3u8downloader.event.DownloadTaskStatusChangeEvent;
-import com.github.cloudgyb.m3u8downloader.event.DownloadTaskStatusChangeEventNotifier;
-import com.github.cloudgyb.m3u8downloader.event.Event;
-import com.github.cloudgyb.m3u8downloader.event.EventAware;
+import com.github.cloudgyb.m3u8downloader.event.*;
 import com.github.cloudgyb.m3u8downloader.util.DateFormatter;
 import com.github.cloudgyb.m3u8downloader.util.SpringBeanUtil;
 import javafx.beans.property.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * 下载任务视图模型
@@ -32,12 +27,10 @@ public class DownloadTaskViewModel implements EventAware {
     private final IntegerProperty id = new SimpleIntegerProperty();
     private final StringProperty url = new SimpleStringProperty();
     private final StringProperty createTime = new SimpleStringProperty();
-    private final StringProperty duration = new SimpleStringProperty();
+    private final StringProperty rate = new SimpleStringProperty();
     private final ObjectProperty<ProgressAndStatus> progressAndStatus = new SimpleObjectProperty<>();
     private final DownloadTaskEntity taskDomain;
     private final TaskDownloadThreadManager taskDownloadThreadManager = TaskDownloadThreadManager.getInstance();
-    //计时器，用于下载时间计时
-    private Timer timer;
     private final DownloadTaskService downloadTaskService = SpringBeanUtil.getBean(DownloadTaskService.class);
 
     /**
@@ -67,18 +60,17 @@ public class DownloadTaskViewModel implements EventAware {
         Integer totalMediaSegment = this.taskDomain.getTotalMediaSegment();
         double progressValue = totalMediaSegment == 0 ? 0D : (double) finishMediaSegment / totalMediaSegment;
         this.progressAndStatus.set(new ProgressAndStatus(statusEnum, progressValue, stage));
-        this.setDuration(this.taskDomain.getDownloadDuration());
+        this.rate.set("-- KB/s");
     }
 
     public void start() {
         taskDownloadThreadManager.startDownloadThread(this.taskDomain);
-        this.startTimer();
     }
 
 
     public void stop() {
+        this.rate.set("-- KB/s");
         taskDownloadThreadManager.stopDownloadThread(this.taskDomain);
-        stopTimer();
     }
 
     public void remove() {
@@ -86,33 +78,10 @@ public class DownloadTaskViewModel implements EventAware {
             this.stop();
         ApplicationStore.getNoFinishedTasks().remove(this);
         downloadTaskService.deleteById(taskDomain.getId());
-        stopTimer();
     }
 
     public void finish() {
         ApplicationStore.getNoFinishedTasks().remove(this);
-        stopTimer();
-    }
-
-    private synchronized void startTimer() {
-        if (this.timer != null)
-            this.timer.cancel();
-        this.timer = new Timer();
-        this.timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                durationIncrement();
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ignored) {
-                }
-            }
-        }, 0, Thread.NORM_PRIORITY);
-    }
-
-    public synchronized void stopTimer() {
-        if (this.timer != null)
-            this.timer.cancel();
     }
 
     public void setUrl(String url) {
@@ -125,15 +94,6 @@ public class DownloadTaskViewModel implements EventAware {
 
     public DownloadTaskStatusEnum getStatus() {
         return this.progressAndStatus.get().getStatus();
-    }
-
-    public void setDuration(Long duration) {
-        this.duration.set(DateFormatter.toDurationText(duration));
-    }
-
-    public void durationIncrement() {
-        long duration = this.taskDomain.getDownloadDuration() + 1;
-        this.setDuration(duration);
     }
 
     @Override
@@ -161,12 +121,16 @@ public class DownloadTaskViewModel implements EventAware {
         return createTime;
     }
 
-    public String getDuration() {
-        return duration.get();
+    public String getRate() {
+        return rate.get();
     }
 
-    public StringProperty durationProperty() {
-        return duration;
+    public StringProperty rateProperty() {
+        return rate;
+    }
+
+    public void setRate(String rate) {
+        this.rate.set(rate);
     }
 
     public ProgressAndStatus getProgressAndStatus() {
@@ -188,6 +152,14 @@ public class DownloadTaskViewModel implements EventAware {
             ProgressAndStatus progressAndStatus1 = event.getProgressAndStatus();
             logger.info("接收到任务状态变更通知：{}", progressAndStatus1.toString());
             this.progressAndStatus.setValue(progressAndStatus1);
+        } else if (e instanceof DownloadRateChangeEvent) {
+            DownloadRateChangeEvent event = (DownloadRateChangeEvent) e;
+            int tid = event.getTid();
+            // 是否是该任务
+            if (tid != this.taskDomain.getId())
+                return;
+            String rateHumanReadable = event.getRate();
+            this.rate.set(rateHumanReadable);
         }
     }
 }

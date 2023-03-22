@@ -7,6 +7,7 @@ import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
 import com.github.cloudgyb.m3u8downloader.domain.entity.MediaSegmentEntity;
 import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
 import com.github.cloudgyb.m3u8downloader.domain.service.MediaSegmentService;
+import com.github.cloudgyb.m3u8downloader.event.DownloadRateChangeEvent;
 import com.github.cloudgyb.m3u8downloader.event.DownloadTaskStatusChangeEvent;
 import com.github.cloudgyb.m3u8downloader.event.DownloadTaskStatusChangeEventNotifier;
 import com.github.cloudgyb.m3u8downloader.m3u8.M3U8Parser;
@@ -135,6 +136,10 @@ public class TaskDownloadThread extends Thread {
             task.setFilePath(targetFilePath);
             downloadTaskService.updateById(task);
             publishStatus(DownloadTaskStatusEnum.RUNNING, 0.0, DownloadTaskStageEnum.SEGMENT_MERGED);
+            // 清理媒体片段
+            threadPool.submit(() -> {
+
+            });
         } catch (Exception e) {
             task.setStage(DownloadTaskStageEnum.SEGMENT_MERGE_FAILED.name());
             task.setStatus(DownloadTaskStatusEnum.STOPPED_ERROR.name());
@@ -183,7 +188,9 @@ public class TaskDownloadThread extends Thread {
                         mediaSegmentEntity.setFinished(true);
                         mediaSegmentEntity.setFilePath(tempFile.getAbsolutePath());
                         long endTime = System.currentTimeMillis();
-                        mediaSegmentEntity.setDownloadDuration(endTime - staterTime);
+                        long duration = endTime - staterTime;
+                        mediaSegmentEntity.setDownloadDuration(duration);
+                        publishDownloadRate(tempFile.length(), duration);
                         mediaSegmentService.updateById(mediaSegmentEntity);
                         if (logger.isInfoEnabled()) {
                             logger.info("任务(ID:{})媒体片段下载完成{}", mediaSegmentEntity.getTaskId(), url);
@@ -268,6 +275,16 @@ public class TaskDownloadThread extends Thread {
             logger.error("解析任务对应的 m3u8 url{}-tid:{} 失败！", url, tid);
         }
         downloadTaskService.updateById(task);
+    }
+
+
+    private void publishDownloadRate(long length, long duration) {
+        if (this.isStopped.get())
+            return;
+        double seconds = duration / 1000D;
+        long rate = Double.valueOf(length / seconds).longValue();
+        String rateHumanReadable = FileUtil.bytesToHumanReadable(rate);
+        eventNotifier.publish(new DownloadRateChangeEvent(this.task.getId(), rateHumanReadable));
     }
 
     private void publishStatus(DownloadTaskStatusEnum statusEnum, Double progress, DownloadTaskStageEnum stageEnum) {

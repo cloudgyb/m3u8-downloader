@@ -7,7 +7,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.text.DecimalFormat;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -53,5 +56,29 @@ public final class FileUtil {
                 logger.error("目录{}创建失败", tempDir.getAbsolutePath());
             }
         }
+    }
+
+    private static final Map<Integer, String> byteUnit = new HashMap<>();
+
+    static {
+        byteUnit.put(0, "B/s");
+        byteUnit.put(1, "KB/s");
+        byteUnit.put(2, "MB/s");
+        byteUnit.put(3, "GB/s");
+        byteUnit.put(4, "TB/s");
+
+    }
+
+    public static String bytesToHumanReadable(long bytes) {
+        DecimalFormat format = new DecimalFormat("0.00");
+        String rateHumanReadable = format.format(bytes) + " B/s";
+        int i = 1;
+        while (bytes > 1024) {
+            bytes = bytes / 1024;
+            String unit = byteUnit.get(i);
+            rateHumanReadable = format.format(bytes) + " " + unit;
+            i++;
+        }
+        return rateHumanReadable;
     }
 }

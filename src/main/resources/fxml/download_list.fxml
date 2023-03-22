@@ -11,7 +11,7 @@
             <TableColumn fx:id="createTimeColumn" text="创建时间" sortType="DESCENDING" style="-fx-alignment: center"/>
             <TableColumn fx:id="urlColumn" text="URL" style="-fx-alignment: center"/>
             <TableColumn fx:id="progressColumn" text="进度" style="-fx-alignment: center"/>
-            <TableColumn fx:id="durationColumn" text="耗时" style="-fx-alignment: center"/>
+            <TableColumn fx:id="rateColumn" text="速率" style="-fx-alignment: center"/>
             <TableColumn fx:id="operaColumn" text="操作" style="-fx-alignment: center"/>
         </columns>
         <StackPane.margin>

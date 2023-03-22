@@ -34,7 +34,7 @@ public class DownloadListViewController {
     @FXML
     private TableColumn<DownloadTaskViewModel, ProgressAndStatus> progressColumn;
     @FXML
-    private TableColumn<DownloadTaskViewModel, Object> durationColumn;
+    private TableColumn<DownloadTaskViewModel, Object> rateColumn;
     @FXML
     private TableColumn<DownloadTaskViewModel, ProgressAndStatus> operaColumn;
 
@@ -57,7 +57,7 @@ public class DownloadListViewController {
             return c1;
         });
         progressColumn.setCellValueFactory(new PropertyValueFactory<>("progressAndStatus"));
-        durationColumn.setCellValueFactory(new PropertyValueFactory<>("duration"));
+        rateColumn.setCellValueFactory(new PropertyValueFactory<>("rate"));
         operaColumn.setCellFactory(cell -> new OperateColumnTableCell());
         operaColumn.setCellValueFactory(new PropertyValueFactory<>("progressAndStatus"));
 
