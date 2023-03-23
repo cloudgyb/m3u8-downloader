@@ -20,4 +20,12 @@ public class DateFormatter {
     public static String format(Date date) {
         return formatter.format(date);
     }
+
+    public static String toDurationText(long durationInMS) {
+        durationInMS /= 1000;
+        long h = durationInMS / 3600;
+        long m = durationInMS / 60;
+        long s = durationInMS % 60;
+        return String.format("%02d:%02d:%02d", h, m, s);
+    }
 }

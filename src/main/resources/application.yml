@@ -1,0 +1,11 @@
+application:
+  config:
+    db-File: ./data.db
+    ffmpeg-bin-file-path: ./bin/ffmpeg.exe
+
+spring:
+  datasource:
+    driver-class-name: org.sqlite.JDBC
+    username:
+    password:
+    url: jdbc:sqlite:${application.config.db-File}

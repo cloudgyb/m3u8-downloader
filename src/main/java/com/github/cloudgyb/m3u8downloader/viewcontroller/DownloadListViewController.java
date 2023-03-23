@@ -1,20 +1,18 @@
 package com.github.cloudgyb.m3u8downloader.viewcontroller;
 
 import com.github.cloudgyb.m3u8downloader.ApplicationStore;
-import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskDao;
+import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStageEnum;
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStatusEnum;
-import com.github.cloudgyb.m3u8downloader.model.DownloadTask;
+import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
+import com.github.cloudgyb.m3u8downloader.model.ProgressAndStatus;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.util.Callback;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 /**
  * 下载列表tab页视图控制器
@@ -26,179 +24,166 @@ public class DownloadListViewController {
     private final static String switchBtnStyle = BootstrapStyle.btnXsStyle;
     private final static String deleteBtnStyle = BootstrapStyle.btnDangerStyle + BootstrapStyle.btnXsStyle;
     @FXML
-    private TableView<DownloadTask> downloadTable;
+    private TableView<DownloadTaskViewModel> downloadTable;
     @FXML
-    private TableColumn<DownloadTask, Object> idColumn;
+    private TableColumn<DownloadTaskViewModel, Integer> idColumn;
     @FXML
-    private TableColumn<DownloadTask, Object> createTimeColumn;
+    private TableColumn<DownloadTaskViewModel, String> createTimeColumn;
     @FXML
-    private TableColumn<DownloadTask, Object> urlColumn;
+    private TableColumn<DownloadTaskViewModel, String> urlColumn;
     @FXML
-    private TableColumn<DownloadTask, Object> progressColumn;
+    private TableColumn<DownloadTaskViewModel, ProgressAndStatus> progressColumn;
     @FXML
-    private TableColumn<DownloadTask, Object> durationColumn;
+    private TableColumn<DownloadTaskViewModel, Object> rateColumn;
     @FXML
-    private TableColumn<DownloadTask, Object> operaColumn;
-    private final DownloadTaskDao taskDao;
-
-    public DownloadListViewController() {
-        this.taskDao = new DownloadTaskDao();
-    }
+    private TableColumn<DownloadTaskViewModel, ProgressAndStatus> operaColumn;
 
     public void init() {
+        // 设置 table 行样式
         downloadTable.setRowFactory(p -> {
-            final TableRow<DownloadTask> objectTableRow = new TableRow<>();
+            final TableRow<DownloadTaskViewModel> objectTableRow = new TableRow<>();
             objectTableRow.setStyle("-fx-pref-height: 50px");
             return objectTableRow;
         });
         downloadTable.getSortOrder().add(createTimeColumn);
 
-        Callback<TableColumn<DownloadTask, Object>, TableCell<DownloadTask, Object>> defaultCellFactory
-                = downloadTaskStringTableColumn -> {
-            final TableCell<DownloadTask, Object> cell = new TableCell<>() {
-                @Override
-                public void updateItem(Object item, boolean empty) {
-                    if (item != null) {
-                        setText(item.toString());
-                    } else {
-                        setText(null);
-                    }
-                }
-            };
-            cell.setAlignment(Pos.CENTER);
-            return cell;
-        };
-        idColumn.setCellFactory(defaultCellFactory);
+        // 设置模型属性关联
         idColumn.setCellValueFactory((new PropertyValueFactory<>("id")));
-        createTimeColumn.setCellFactory(defaultCellFactory);
         createTimeColumn.setCellValueFactory(new PropertyValueFactory<>("createTime"));
-        urlColumn.setCellFactory(defaultCellFactory);
         urlColumn.setCellValueFactory(new PropertyValueFactory<>("url"));
-
         progressColumn.setCellFactory(cell -> {
-            TableCell<DownloadTask, Object> c1 = new TableCell<>() {
-                private final ProgressBar progressBar = new ProgressBar(0.0);
-                private final Label label = new Label();
-                private final StackPane pane = new StackPane(progressBar, label);
-
-                @Override
-                protected void updateItem(Object value, boolean empty) {
-                    super.updateItem(value, empty);
-                    setGraphic(null);
-                    if (value != null) {
-                        final String s = value.toString();
-                        if (s.endsWith("%")) { //是进度值更新
-                            double progress = Double.parseDouble(s.substring(0, s.length() - 1));
-                            progressBar.setProgress(progress / 100);
-                        }
-                        final int index = getIndex();
-                        final DownloadTask downloadTask = downloadTable.getItems().get(index);
-                        final Integer status = downloadTask.getStatus();
-                        label.setText(s);
-                        setStyleByTaskStatus(label, status);
-                        setGraphic(pane);
-                    }
-                }
-            };
+            TableCell<DownloadTaskViewModel, ProgressAndStatus> c1 = new ProgressBarWithLabelTableCell();
             c1.setAlignment(Pos.CENTER);
             return c1;
         });
-        progressColumn.setCellValueFactory(new PropertyValueFactory<>("statusText"));
-        durationColumn.setCellFactory(defaultCellFactory);
-        durationColumn.setCellValueFactory(new PropertyValueFactory<>("duration"));
+        progressColumn.setCellValueFactory(new PropertyValueFactory<>("progressAndStatus"));
+        rateColumn.setCellValueFactory(new PropertyValueFactory<>("rate"));
+        operaColumn.setCellFactory(cell -> new OperateColumnTableCell());
+        operaColumn.setCellValueFactory(new PropertyValueFactory<>("progressAndStatus"));
 
-        Callback<TableColumn<DownloadTask, Object>, TableCell<DownloadTask, Object>> operaColumnCellFactory = new Callback<>() {
-            @Override
-            public TableCell<DownloadTask, Object> call(TableColumn param) {
-                return new TableCell<>() {
-                    private final ToggleButton switchBtn = new ToggleButton("停止");
-                    private final ToggleButton delBtn = new ToggleButton("删除");
-
-                    {
-                        switchBtn.setStyle(switchBtnStyle);
-                        delBtn.setStyle(deleteBtnStyle);
-                        delBtn.setTooltip(new Tooltip("删除下载任务"));
-                        switchBtn.setOnMouseClicked(event -> switchDownloadStatus(getIndex()));
-                        delBtn.setOnMouseClicked(event -> deleteDownload(getIndex()));
-                    }
-
-                    @Override
-                    protected void updateItem(Object item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (empty) {
-                            setGraphic(null);
-                        } else {
-                            int status = (Integer) item;
-                            String text = "停止";
-                            String style = BootstrapStyle.btnXsStyle;
-                            if (status == DownloadTaskStatusEnum.NEW.getStatus() ||
-                                    status == DownloadTaskStatusEnum.STOPPED.getStatus()) {
-                                style = style + BootstrapStyle.btnPrimaryStyle;
-                                text = "开始";
-                            } else if (status == DownloadTaskStatusEnum.RUNNING.getStatus()) {
-                                style = style + BootstrapStyle.btnWarningStyle;
-                                text = "停止";
-                            } else if (status == DownloadTaskStatusEnum.FAILED.getStatus()) {
-                                style = style + BootstrapStyle.btnPrimaryStyle;
-                                text = "重试";
-                            } else if (status == DownloadTaskStatusEnum.FINISHED.getStatus()) {
-                                downloadTable.getItems().remove(getIndex());
-                                downloadTable.refresh();
-                            }
-                            switchBtn.setText(text);
-                            switchBtn.setStyle(style);
-                            switchBtn.setTooltip(new Tooltip("点击" + text));
-                            HBox hBox = new HBox(switchBtn, delBtn);
-                            hBox.setSpacing(5);
-                            hBox.setAlignment(Pos.CENTER);
-                            setGraphic(hBox);
-                        }
-                    }
-                };
-            }
-        };
-        operaColumn.setCellFactory(operaColumnCellFactory);
-        operaColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
-
-        List<DownloadTask> notFinishTasks = ApplicationStore.getNoFinishedTasks();
+        // 添加数据到 table
+        List<DownloadTaskViewModel> notFinishTasks = ApplicationStore.getNoFinishedTasks();
         downloadTable.getItems().addAll(notFinishTasks);
         downloadTable.sort();
     }
 
-    private void setStyleByTaskStatus(Label label, Integer status) {
+    private void setStyleByTaskStatus(Label label, DownloadTaskStageEnum status) {
         String style = "";
-        if (status == DownloadTaskStatusEnum.NEW.getStatus() ||
-                status == DownloadTaskStatusEnum.STOPPED.getStatus()) {
+        if (status == DownloadTaskStageEnum.NEW) {
             style = style + BootstrapStyle.textInfo;
-        } else if (status == DownloadTaskStatusEnum.RUNNING.getStatus() ||
-                status == DownloadTaskStatusEnum.FINISHED.getStatus()) {
+        } else if (status == DownloadTaskStageEnum.M3U8_PARSING ||
+                status == DownloadTaskStageEnum.DOWNLOAD_FINISHED ||
+                status == DownloadTaskStageEnum.M3U8_PARSED) {
             style = style + BootstrapStyle.textSuccess;
-        } else if (status == DownloadTaskStatusEnum.FAILED.getStatus()) {
+        } else if (status == DownloadTaskStageEnum.M3U8_PARSE_FAILED ||
+                status == DownloadTaskStageEnum.DOWNLOAD_FAILED) {
             style = style + BootstrapStyle.textDanger;
         }
         label.setStyle(style);
     }
 
     private void switchDownloadStatus(int index) {
-        final DownloadTask downloadTask = this.downloadTable.getItems().get(index);
-        final Integer status = downloadTask.getStatus();
-        if (status == DownloadTaskStatusEnum.NEW.getStatus() ||
-                status == DownloadTaskStatusEnum.STOPPED.getStatus() ||
-                status == DownloadTaskStatusEnum.FAILED.getStatus()) {
-            try {
-                downloadTask.start();
-            } catch (IOException | ExecutionException | InterruptedException e) {
-                e.printStackTrace();
-            }
-        } else if (status == DownloadTaskStatusEnum.RUNNING.getStatus())
-            downloadTask.stop();
-
+        DownloadTaskViewModel downloadTaskViewModel = this.downloadTable.getItems().get(index);
+        DownloadTaskStatusEnum status = downloadTaskViewModel.getStatus();
+        if (status == DownloadTaskStatusEnum.RUNNING) {
+            downloadTaskViewModel.progressAndStatusProperty()
+                    .set(new ProgressAndStatus(DownloadTaskStatusEnum.STOPPED_MANUAL, null,
+                            downloadTaskViewModel.getProgressAndStatus().getStage()));
+            downloadTaskViewModel.stop();
+        } else {
+            downloadTaskViewModel.start();
+        }
     }
 
     public void deleteDownload(int index) {
-        final DownloadTask downloadTask = this.downloadTable.getItems().get(index);
-        downloadTask.remove();
-        taskDao.deleteById(downloadTask.getId());
+        final DownloadTaskViewModel downloadTaskViewModel = this.downloadTable.getItems().get(index);
+        downloadTaskViewModel.remove();
         downloadTable.getItems().remove(index);
+    }
+
+    class ProgressBarWithLabelTableCell extends TableCell<DownloadTaskViewModel, ProgressAndStatus> {
+        private final ProgressBar progressBar = new ProgressBar(0.0);
+        private final Label label = new Label();
+        private final StackPane pane = new StackPane(progressBar, label);
+
+        /**
+         * 根据任务的进度和状态做出 ui 的变化
+         */
+        @Override
+        protected void updateItem(ProgressAndStatus progressAndStatus, boolean empty) {
+            super.updateItem(progressAndStatus, empty);
+            setGraphic(null);
+            if (progressAndStatus != null) {
+                Double progressValue = progressAndStatus.getProgress();
+                if (progressValue != null) {
+                    progressBar.setProgress(progressValue);
+                }
+                DownloadTaskStageEnum stage = progressAndStatus.getStage();
+                if (stage != null) {
+                    String labelText = stage.getStatus();
+                    if (stage == DownloadTaskStageEnum.DOWNLOADING && progressValue != null) {
+                        String s = progressValue * 100 + "";
+                        labelText = (s.length() > 5 ? s.substring(0, 5) : s) + "%";
+                    }
+                    label.setText(labelText);
+                    setStyleByTaskStatus(label, stage);
+                }
+                DownloadTaskStatusEnum status = progressAndStatus.getStatus();
+                if (status == DownloadTaskStatusEnum.STOPPED_MANUAL) {
+                    label.setText(status.getStatus());
+                    setStyleByTaskStatus(label, stage);
+                }
+                setGraphic(pane);
+            }
+        }
+    }
+
+    class OperateColumnTableCell extends TableCell<DownloadTaskViewModel, ProgressAndStatus> {
+        private final ToggleButton switchBtn = new ToggleButton("停止");
+        private final ToggleButton delBtn = new ToggleButton("删除");
+
+        {
+            switchBtn.setStyle(switchBtnStyle);
+            delBtn.setStyle(deleteBtnStyle);
+            delBtn.setTooltip(new Tooltip("删除下载任务"));
+            switchBtn.setOnMouseClicked(event -> switchDownloadStatus(getIndex()));
+            delBtn.setOnMouseClicked(event -> deleteDownload(getIndex()));
+        }
+
+        /**
+         * 根据状态变更更新操作按钮文本及样式
+         */
+        @Override
+        protected void updateItem(ProgressAndStatus progressAndStatus, boolean empty) {
+            super.updateItem(progressAndStatus, empty);
+            if (empty) {
+                setGraphic(null);
+            } else if (progressAndStatus != null && progressAndStatus.getStatus() != null) {
+                DownloadTaskStatusEnum status = progressAndStatus.getStatus();
+                String text = "停止";
+                String style = BootstrapStyle.btnXsStyle;
+                if (status == DownloadTaskStatusEnum.NEW || status == DownloadTaskStatusEnum.STOPPED_MANUAL) {
+                    style = style + BootstrapStyle.btnPrimaryStyle;
+                    text = "开始";
+                } else if (status == DownloadTaskStatusEnum.RUNNING) {
+                    style = style + BootstrapStyle.btnWarningStyle;
+                    text = "停止";
+                } else if (status == DownloadTaskStatusEnum.FINISHED) {
+                    downloadTable.getItems().remove(getIndex());
+                    downloadTable.refresh();
+                } else {
+                    style = style + BootstrapStyle.btnPrimaryStyle;
+                    text = "重试";
+                }
+                switchBtn.setText(text);
+                switchBtn.setStyle(style);
+                switchBtn.setTooltip(new Tooltip("点击" + text));
+                HBox hBox = new HBox(switchBtn, delBtn);
+                hBox.setSpacing(5);
+                hBox.setAlignment(Pos.CENTER);
+                setGraphic(hBox);
+            }
+        }
+
     }
 }
