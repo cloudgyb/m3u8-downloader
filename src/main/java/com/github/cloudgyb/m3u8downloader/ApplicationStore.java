@@ -1,10 +1,13 @@
 package com.github.cloudgyb.m3u8downloader;
 
-import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskDao;
-import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskDomain;
+import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStatusEnum;
 import com.github.cloudgyb.m3u8downloader.domain.SystemConfig;
 import com.github.cloudgyb.m3u8downloader.domain.SystemConfigDao;
+import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
+import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
+import com.github.cloudgyb.m3u8downloader.download.TaskDownloadThreadManager;
 import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
+import com.github.cloudgyb.m3u8downloader.util.SpringBeanUtil;
 
 import java.io.File;
 import java.util.List;
@@ -19,13 +22,24 @@ public class ApplicationStore {
     private static final String workDir;
     private static final String tmpDir;
     private static volatile SystemConfig systemConfig;
+    private final static DownloadTaskService downloadTaskService = SpringBeanUtil.getBean(DownloadTaskService.class);
 
     static {
-        final DownloadTaskDao downloadTaskDao = new DownloadTaskDao();
-        final List<DownloadTaskDomain> list = downloadTaskDao.selectNoFinished();
-        for (DownloadTaskDomain domain : list) {
-            final DownloadTaskViewModel downloadTaskViewModel = new DownloadTaskViewModel(domain);
+        List<DownloadTaskEntity> list = downloadTaskService.getAllNotFinishedTask();
+        for (DownloadTaskEntity task : list) {
+            DownloadTaskStatusEnum statusEnum = DownloadTaskStatusEnum.STOPPED_ERROR;
+            // 程序启动初始化下载任务，设置状态为 STOPPED
+            String status = task.getStatus();
+            if (status != null) {
+                statusEnum = DownloadTaskStatusEnum.valueOf(status);
+                if (statusEnum == DownloadTaskStatusEnum.RUNNING) {
+                    statusEnum = DownloadTaskStatusEnum.STOPPED_ERROR;
+                }
+            }
+            task.setStatus(statusEnum.name());
+            final DownloadTaskViewModel downloadTaskViewModel = new DownloadTaskViewModel(task);
             noFinishedTask.add(downloadTaskViewModel);
+            TaskDownloadThreadManager.getInstance().createDownloadThread(task);
         }
         //初始化系统配置
         String defaultDownloadDir = System.getProperty("user.home") +
@@ -50,6 +64,7 @@ public class ApplicationStore {
         return noFinishedTask;
     }
 
+    @SuppressWarnings("unused")
     public static String getWorkDir() {
         return workDir;
     }

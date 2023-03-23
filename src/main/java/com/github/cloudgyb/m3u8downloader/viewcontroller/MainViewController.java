@@ -20,14 +20,6 @@ import java.io.IOException;
 public class MainViewController {
     @FXML
     private TabPane tabPane;
-    @FXML
-    private Tab newDownloadTaskTab;
-    @FXML
-    private Tab downloadListTab;
-    @FXML
-    private Tab downloadHistoryTab;
-    @FXML
-    private Tab downloadSettingTab;
 
     public void init() {
         ApplicationContext.getInstance().set("tabs", tabPane);

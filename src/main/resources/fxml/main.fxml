@@ -4,12 +4,8 @@
 <TabPane fx:id="tabPane" fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.MainViewController"
          prefHeight="400.0" prefWidth="800.0" tabClosingPolicy="UNAVAILABLE"
          xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
-    <tabs>
-        <Tab fx:id="newDownloadTaskTab" onSelectionChanged="#newDownloadTaskTabSelected"
-             text="新建下载任务"/>
-        <Tab fx:id="downloadListTab" onSelectionChanged="#downloadListTabSelected" text="当前下载"/>
-        <Tab fx:id="downloadHistoryTab" onSelectionChanged="#downloadHistoryTabSelected"
-             text="下载历史"/>
-        <Tab fx:id="downloadSettingTab" onSelectionChanged="#downloadSettingTabSelected" text="下载设置"/>
-    </tabs>
+    <Tab onSelectionChanged="#newDownloadTaskTabSelected" text="新建下载任务"/>
+    <Tab onSelectionChanged="#downloadListTabSelected" text="当前下载"/>
+    <Tab onSelectionChanged="#downloadHistoryTabSelected" text="下载历史"/>
+    <Tab onSelectionChanged="#downloadSettingTabSelected" text="下载设置"/>
 </TabPane>

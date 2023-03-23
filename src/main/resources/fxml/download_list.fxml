@@ -5,22 +5,20 @@
 <?import javafx.scene.layout.StackPane?>
 <StackPane fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.DownloadListViewController"
            xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8">
-    <children>
-        <TableView fx:id="downloadTable">
-            <columns>
-                <TableColumn fx:id="idColumn" sortType="DESCENDING" text="ID"/>
-                <TableColumn fx:id="createTimeColumn" text="创建时间" sortType="DESCENDING"/>
-                <TableColumn fx:id="urlColumn" text="URL"/>
-                <TableColumn fx:id="progressColumn" text="进度"/>
-                <TableColumn fx:id="durationColumn" text="耗时"/>
-                <TableColumn fx:id="operaColumn" text="操作"/>
-            </columns>
-            <StackPane.margin>
-                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
-            </StackPane.margin>
-            <columnResizePolicy>
-                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-            </columnResizePolicy>
-        </TableView>
-    </children>
+    <TableView fx:id="downloadTable">
+        <columns>
+            <TableColumn fx:id="idColumn" sortType="DESCENDING" text="ID" style="-fx-alignment: center"/>
+            <TableColumn fx:id="createTimeColumn" text="创建时间" sortType="DESCENDING" style="-fx-alignment: center"/>
+            <TableColumn fx:id="urlColumn" text="URL" style="-fx-alignment: center"/>
+            <TableColumn fx:id="progressColumn" text="进度" style="-fx-alignment: center"/>
+            <TableColumn fx:id="rateColumn" text="速率" style="-fx-alignment: center"/>
+            <TableColumn fx:id="operaColumn" text="操作" style="-fx-alignment: center"/>
+        </columns>
+        <StackPane.margin>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+        </StackPane.margin>
+        <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+        </columnResizePolicy>
+    </TableView>
 </StackPane>
