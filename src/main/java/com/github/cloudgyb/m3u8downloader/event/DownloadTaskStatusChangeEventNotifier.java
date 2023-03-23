@@ -19,4 +19,9 @@ public class DownloadTaskStatusChangeEventNotifier implements EventNotifier {
     public void subscribe(EventAware eventAware) {
         eventAwareS.add(eventAware);
     }
+
+    @Override
+    public void unsubscribe(EventAware eventAware) {
+        eventAwareS.remove(eventAware);
+    }
 }

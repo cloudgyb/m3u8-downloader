@@ -30,6 +30,7 @@ module m3u8downloader {
 
 
     exports com.github.cloudgyb.m3u8downloader;
+    exports com.github.cloudgyb.m3u8downloader.conf;
     exports com.github.cloudgyb.m3u8downloader.log;
     exports com.github.cloudgyb.m3u8downloader.viewcontroller;
     exports com.github.cloudgyb.m3u8downloader.model;

@@ -78,10 +78,14 @@ public class DownloadTaskViewModel implements EventAware {
             this.stop();
         ApplicationStore.getNoFinishedTasks().remove(this);
         downloadTaskService.deleteById(taskDomain.getId());
+        DownloadTaskStatusChangeEventNotifier eventNotifier = DownloadTaskStatusChangeEventNotifier.INSTANCE;
+        eventNotifier.unsubscribe(this);
     }
 
     public void finish() {
         ApplicationStore.getNoFinishedTasks().remove(this);
+        DownloadTaskStatusChangeEventNotifier eventNotifier = DownloadTaskStatusChangeEventNotifier.INSTANCE;
+        eventNotifier.unsubscribe(this);
     }
 
     public void setUrl(String url) {
@@ -152,6 +156,10 @@ public class DownloadTaskViewModel implements EventAware {
             ProgressAndStatus progressAndStatus1 = event.getProgressAndStatus();
             logger.info("接收到任务状态变更通知：{}", progressAndStatus1.toString());
             this.progressAndStatus.setValue(progressAndStatus1);
+            DownloadTaskStatusEnum status = progressAndStatus1.getStatus();
+            if (DownloadTaskStatusEnum.FINISHED == status) {
+                finish();
+            }
         } else if (e instanceof DownloadRateChangeEvent) {
             DownloadRateChangeEvent event = (DownloadRateChangeEvent) e;
             int tid = event.getTid();

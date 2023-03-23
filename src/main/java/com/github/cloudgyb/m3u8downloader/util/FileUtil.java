@@ -22,6 +22,29 @@ import java.util.stream.Collectors;
 public final class FileUtil {
     private static final Logger logger = LoggerFactory.getLogger(FileUtil.class);
 
+    public static void deleteFileQuiet(File file) {
+        if (file.exists()) {
+            boolean delete = file.delete();
+            if (delete) {
+                logger.debug("文件 {} 已删除！", file.getAbsolutePath());
+            } else {
+                logger.debug("文件 {} 删除失败！", file.getAbsolutePath());
+            }
+        }
+    }
+
+    public static void deleteDirIfEmpty(File file) {
+        if (file.exists() && file.isDirectory()) {
+            boolean delete = file.delete();
+            if (delete) {
+                logger.debug("目录 {} 已删除！", file.getAbsolutePath());
+            } else {
+                logger.debug("目录 {} 删除失败！", file.getAbsolutePath());
+            }
+        }
+    }
+
+
     public static void mergeFiles(List<String> sourceFiles, String targetFile) throws IOException {
         List<File> files = sourceFiles.stream().map(File::new).collect(Collectors.toList());
         File file = new File(targetFile);

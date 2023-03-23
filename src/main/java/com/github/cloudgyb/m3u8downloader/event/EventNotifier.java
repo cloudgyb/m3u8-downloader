@@ -9,4 +9,6 @@ public interface EventNotifier {
     void publish(Event event);
 
     void subscribe(EventAware eventAware);
+
+    void unsubscribe(EventAware eventAware);
 }

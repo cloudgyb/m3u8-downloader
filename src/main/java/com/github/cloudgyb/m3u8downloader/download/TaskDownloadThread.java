@@ -14,10 +14,7 @@ import com.github.cloudgyb.m3u8downloader.m3u8.M3U8Parser;
 import com.github.cloudgyb.m3u8downloader.m3u8.MediaSegment;
 import com.github.cloudgyb.m3u8downloader.model.DownloadTaskStatus;
 import com.github.cloudgyb.m3u8downloader.model.ProgressAndStatus;
-import com.github.cloudgyb.m3u8downloader.util.DataStreamUtil;
-import com.github.cloudgyb.m3u8downloader.util.FileUtil;
-import com.github.cloudgyb.m3u8downloader.util.HttpClientUtil;
-import com.github.cloudgyb.m3u8downloader.util.SpringBeanUtil;
+import com.github.cloudgyb.m3u8downloader.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,7 +127,7 @@ public class TaskDownloadThread extends Thread {
             List<String> fileSegments = list.stream().map(MediaSegmentEntity::getFilePath).collect(Collectors.toList());
             String downloadDir = ApplicationStore.getSystemConfig().getDownloadDir();
             String targetFilePath = downloadDir + File.separator + tid + ".mp4";
-            FileUtil.mergeFiles(fileSegments, targetFilePath);
+            FfmpegUtil.mergeTS(fileSegments, targetFilePath, true);
             task.setStage(DownloadTaskStageEnum.SEGMENT_MERGED.name());
             task.setStatus(DownloadTaskStatusEnum.RUNNING.name());
             task.setFilePath(targetFilePath);

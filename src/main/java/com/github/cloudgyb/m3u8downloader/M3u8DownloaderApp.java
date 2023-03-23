@@ -1,6 +1,7 @@
 package com.github.cloudgyb.m3u8downloader;
 
 import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
+import com.github.cloudgyb.m3u8downloader.util.SpringBeanUtil;
 import com.github.cloudgyb.m3u8downloader.viewcontroller.MainViewController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -11,11 +12,21 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.kordamp.bootstrapfx.BootstrapFX;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.LogManager;
@@ -30,6 +41,8 @@ import static com.github.cloudgyb.m3u8downloader.viewcontroller.BootstrapStyle.*
  */
 @SpringBootApplication
 public class M3u8DownloaderApp extends Application {
+    private static final Logger logger = LoggerFactory.getLogger(M3u8DownloaderApp.class);
+
     static {
         final LogManager logManager = LogManager.getLogManager();
         try {
@@ -77,7 +90,35 @@ public class M3u8DownloaderApp extends Application {
 
     public static void main(String[] args) {
         SpringApplication.run(M3u8DownloaderApp.class);
+        initDatabase();
         launch(args);
+    }
+
+    private static void initDatabase() {
+        ClassPathResource schemeCreateRes = new ClassPathResource("/db.sql");
+        String sql;
+        try (InputStream inputStream = schemeCreateRes.getInputStream()) {
+            byte[] bytes = inputStream.readAllBytes();
+            sql = new String(bytes, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            logger.error("读取初始化 sql 文件失败！", e);
+            return;
+        }
+        SqlSessionFactory sessionFactory = SpringBeanUtil.getBean(SqlSessionFactory.class);
+        try (SqlSession sqlSession = sessionFactory.openSession();
+             Connection connection = sqlSession.getConnection()) {
+            String[] sqls = sql.split(";");
+            for (String s : sqls) {
+                try (PreparedStatement ps = connection.prepareStatement(s)) {
+                    boolean isSuccess = ps.execute();
+                    if (isSuccess) {
+                        logger.info("表结构已初始化！");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("执行初始化 SQL 出错！", e);
+        }
     }
 
     @Override
