@@ -58,8 +58,10 @@ public final class SystemCommandUtil {
             }
         } catch (InterruptedException ie) {
             logger.error("执行命令'{}'被中断！", Arrays.toString(cmdarray));
+            throw new RuntimeException("执行系统命令被中断！", ie);
         } catch (IOException e) {
             logger.error("执行命令'" + Arrays.toString(cmdarray) + "'抛出异常！", e);
+            throw new RuntimeException("执行系统命令失败！", e);
         }
         return new CommandExecResult(exitCode, stdinOutput, errorOutput);
     }

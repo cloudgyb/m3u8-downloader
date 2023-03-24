@@ -133,10 +133,6 @@ public class TaskDownloadThread extends Thread {
             task.setFilePath(targetFilePath);
             downloadTaskService.updateById(task);
             publishStatus(DownloadTaskStatusEnum.RUNNING, 0.0, DownloadTaskStageEnum.SEGMENT_MERGED);
-            // 清理媒体片段
-            threadPool.submit(() -> {
-
-            });
         } catch (Exception e) {
             task.setStage(DownloadTaskStageEnum.SEGMENT_MERGE_FAILED.name());
             task.setStatus(DownloadTaskStatusEnum.STOPPED_ERROR.name());
