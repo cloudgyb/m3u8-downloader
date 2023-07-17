@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class TaskDownloadThread extends Thread {
@@ -41,6 +42,10 @@ public class TaskDownloadThread extends Thread {
     private final DownloadTaskService downloadTaskService = SpringBeanUtil.getBean(DownloadTaskService.class);
     private final DownloadTaskStatusChangeEventNotifier eventNotifier = DownloadTaskStatusChangeEventNotifier.INSTANCE;
     private final AtomicBoolean isStopped = new AtomicBoolean(true);
+    /**
+     * 下载字节计数器，用于计算速率
+     */
+    private final AtomicLong bytesCounter = new AtomicLong();
 
     public TaskDownloadThread(DownloadTaskEntity task) {
         this.task = task;
@@ -144,6 +149,7 @@ public class TaskDownloadThread extends Thread {
     private void downloadMediaSegments(DownloadTaskEntity task) {
         task.setStage(DownloadTaskStageEnum.DOWNLOADING.name());
         task.setStatus(DownloadTaskStatusEnum.RUNNING.name());
+        startDownloadRateUpdateThread();
         downloadTaskService.updateById(task);
         publishStatus(DownloadTaskStatusEnum.RUNNING,
                 getProgress(task),
@@ -173,17 +179,18 @@ public class TaskDownloadThread extends Thread {
                             logger.info("开始下载任务(ID:{})媒体片段{}", mediaSegmentEntity.getTaskId(), url);
                         }
                         InputStream inputStream = HttpClientUtil.getAsInputStream(url);
-                        File tempDir = new File(ApplicationStore.getTmpDir(), "m3u8_" + task.getCreateTime().getTime() + "");
+                        File tempDir = new File(ApplicationStore.getTmpDir(),
+                                "m3u8_" + task.getCreateTime().getTime());
                         FileUtil.ensureDirExist(tempDir);
                         File tempFile = new File(tempDir, mediaSegmentEntity.getId().toString() + ".ts");
                         FileOutputStream fos = new FileOutputStream(tempFile);
-                        DataStreamUtil.copy(inputStream, fos, true, true);
+                        DataStreamUtil.copy(inputStream, fos, true, true, bytesCounter);
                         mediaSegmentEntity.setFinished(true);
                         mediaSegmentEntity.setFilePath(tempFile.getAbsolutePath());
                         long endTime = System.currentTimeMillis();
                         long duration = endTime - staterTime;
                         mediaSegmentEntity.setDownloadDuration(duration);
-                        publishDownloadRate(tempFile.length(), duration);
+                        //publishDownloadRate(tempFile.length(), duration);
                         mediaSegmentService.updateById(mediaSegmentEntity);
                         if (logger.isInfoEnabled()) {
                             logger.info("任务(ID:{})媒体片段下载完成{}", mediaSegmentEntity.getTaskId(), url);
@@ -224,6 +231,20 @@ public class TaskDownloadThread extends Thread {
             publishStatus(DownloadTaskStatusEnum.STOPPED_ERROR, getProgress(task),
                     DownloadTaskStageEnum.DOWNLOAD_FAILED);
         }
+    }
+
+    @SuppressWarnings("all")
+    private void startDownloadRateUpdateThread() {
+        threadPool.submit(() -> {
+            while (!isStopped.get()) {
+                publishDownloadRate(bytesCounter.get(), 1000);
+                bytesCounter.set(0L);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ignore) {
+                }
+            }
+        });
     }
 
     private static double getProgress(DownloadTaskEntity task) {

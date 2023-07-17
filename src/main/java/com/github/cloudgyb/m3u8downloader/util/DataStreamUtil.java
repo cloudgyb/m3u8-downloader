@@ -1,6 +1,7 @@
 package com.github.cloudgyb.m3u8downloader.util;
 
 import java.io.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 数据流与文件工具类
@@ -9,11 +10,15 @@ import java.io.*;
  * 2021/5/17 16:28
  */
 public class DataStreamUtil {
-    public static void copy(InputStream in, OutputStream out, boolean closeIn, boolean closeOut) throws IOException {
+    public static void copy(InputStream in, OutputStream out, boolean closeIn, boolean closeOut, AtomicLong bytesCounter)
+            throws IOException {
         byte[] buff = new byte[512];
         int n;
         while ((n = in.read(buff)) > 0) {
             out.write(buff, 0, n);
+            if (bytesCounter != null) {
+                bytesCounter.addAndGet(n);
+            }
         }
         if (closeIn)
             in.close();
@@ -23,6 +28,6 @@ public class DataStreamUtil {
 
     public static void copy(File sourceFile, OutputStream out, boolean closeOut) throws IOException {
         final FileInputStream fis = new FileInputStream(sourceFile);
-        copy(fis, out, true, closeOut);
+        copy(fis, out, true, closeOut, null);
     }
 }
