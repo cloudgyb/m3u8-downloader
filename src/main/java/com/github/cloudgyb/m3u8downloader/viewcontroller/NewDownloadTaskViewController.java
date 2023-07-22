@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.net.URI;
@@ -23,16 +24,22 @@ public class NewDownloadTaskViewController {
     @FXML
     private CheckBox showAdvOptionCheckBox;
     @FXML
-    private HBox advOptionHBox;
+    private VBox advOptionHBox;
     @FXML
     private Slider threadCountSlider;
+    @FXML
+    private TextField saveFilename;
+    private volatile static boolean isShowAdvOption = false;
 
     private final NewDownloadTaskViewModel viewModel = new NewDownloadTaskViewModel();
 
     public void init() {
-        this.threadCountSlider.setValue(ApplicationStore.getSystemConfig().getDefaultThreadCount());
-        urlTextField.textProperty().bindBidirectional(viewModel.urlProperty());
         threadCountSlider.valueProperty().bindBidirectional(viewModel.taskMaxThreadCountProperty());
+        urlTextField.textProperty().bindBidirectional(viewModel.urlProperty());
+        saveFilename.textProperty().bindBidirectional(viewModel.filenameProperty());
+        this.threadCountSlider.setValue(ApplicationStore.getSystemConfig().getDefaultThreadCount());
+        this.advOptionHBox.setVisible(isShowAdvOption);
+        this.showAdvOptionCheckBox.setSelected(isShowAdvOption);
     }
 
     public void downBtnClick() {
@@ -68,6 +75,7 @@ public class NewDownloadTaskViewController {
     public void showAdvOption() {
         final boolean selected = showAdvOptionCheckBox.isSelected();
         advOptionHBox.setVisible(selected);
+        isShowAdvOption = selected;
     }
 
     private void showAlert(String msg) {

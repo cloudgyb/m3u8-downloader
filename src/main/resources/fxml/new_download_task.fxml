@@ -7,7 +7,7 @@
       prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
     <HBox alignment="CENTER" prefWidth="600.0">
         <TextField fx:id="urlTextField" minHeight="38.0" prefHeight="38.0" prefWidth="512.0"
-                   promptText="输入m3u8下载地址，例如：http://www.domain.com/ffr4443f.m3u8/"/>
+                   promptText="输入m3u8下载地址，例如：https://www.domain.com/ffr4443f.m3u8"/>
         <Button mnemonicParsing="false" onAction="#downBtnClick" prefHeight="38.0"
                 text="立即下载">
             <styleClass>
@@ -26,13 +26,23 @@
         <CheckBox fx:id="showAdvOptionCheckBox" mnemonicParsing="false" onAction="#showAdvOption"
                   text="显示高级选项"/>
     </HBox>
-    <HBox fx:id="advOptionHBox" maxWidth="600.0" prefWidth="600.0" visible="false">
-        <Label text="下载线程数">
-            <HBox.margin>
-                <Insets right="10.0"/>
-            </HBox.margin>
-        </Label>
-        <Slider fx:id="threadCountSlider" blockIncrement="5.0" majorTickUnit="1.0" max="5.0" min="1.0"
-                minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="1.0"/>
-    </HBox>
+    <VBox fx:id="advOptionHBox" maxWidth="600.0" prefWidth="600.0" visible="false">
+        <HBox maxWidth="600.0" prefWidth="600.0">
+            <Label text="保存文件名">
+                <HBox.margin>
+                    <Insets right="10.0"/>
+                </HBox.margin>
+            </Label>
+            <TextField fx:id="saveFilename" promptText="默认使用数字编号"/>
+        </HBox>
+        <HBox maxWidth="600.0" prefWidth="600.0">
+            <Label text="下载线程数">
+                <HBox.margin>
+                    <Insets right="10.0"/>
+                </HBox.margin>
+            </Label>
+            <Slider fx:id="threadCountSlider" blockIncrement="5.0" majorTickUnit="1.0" max="5.0" min="1.0"
+                    minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="1.0"/>
+        </HBox>
+    </VBox>
 </VBox>

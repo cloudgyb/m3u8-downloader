@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS "task"
     "status"               TEXT
 );
 
+ALTER TABLE "task" ADD COLUMN "save_filename" TEXT;
+
 CREATE TABLE IF NOT EXISTS "media_segment"
 (
     "id"                INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,

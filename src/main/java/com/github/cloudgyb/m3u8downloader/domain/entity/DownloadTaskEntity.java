@@ -38,6 +38,7 @@ public class DownloadTaskEntity {
      */
     private String status;
     private Integer maxThreadCount;
+    private String saveFilename;
 
     public Integer getId() {
         return id;
@@ -145,5 +146,13 @@ public class DownloadTaskEntity {
 
     public String getDurationText() {
         return DateFormatter.toDurationText(downloadDuration);
+    }
+
+    public String getSaveFilename() {
+        return saveFilename;
+    }
+
+    public void setSaveFilename(String saveFilename) {
+        this.saveFilename = saveFilename;
     }
 }

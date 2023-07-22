@@ -17,6 +17,7 @@ import com.github.cloudgyb.m3u8downloader.model.ProgressAndStatus;
 import com.github.cloudgyb.m3u8downloader.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.NonNull;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -131,7 +132,11 @@ public class TaskDownloadThread extends Thread {
             List<MediaSegmentEntity> list = mediaSegmentService.getByTaskId(tid, true, -1);
             List<String> fileSegments = list.stream().map(MediaSegmentEntity::getFilePath).collect(Collectors.toList());
             String downloadDir = ApplicationStore.getSystemConfig().getDownloadDir();
-            String targetFilePath = downloadDir + File.separator + tid + ".mp4";
+            String saveFilename = task.getSaveFilename();
+            if (saveFilename == null || saveFilename.trim().equals("")) {
+                saveFilename = String.valueOf(tid);
+            }
+            String targetFilePath = downloadDir + File.separator + saveFilename + ".mp4";
             FfmpegUtil.mergeTS(fileSegments, targetFilePath, true);
             task.setStage(DownloadTaskStageEnum.SEGMENT_MERGED.name());
             task.setStatus(DownloadTaskStatusEnum.RUNNING.name());
@@ -291,7 +296,7 @@ public class TaskDownloadThread extends Thread {
         downloadTaskService.updateById(task);
     }
 
-
+    @SuppressWarnings("all")
     private void publishDownloadRate(long length, long duration) {
         if (this.isStopped.get())
             return;
@@ -319,7 +324,7 @@ public class TaskDownloadThread extends Thread {
         private final AtomicInteger threadCounter = new AtomicInteger(0);
 
         @Override
-        public Thread newThread(Runnable runnable) {
+        public Thread newThread(@NonNull Runnable runnable) {
             Thread thread = new Thread(runnable);
             thread.setName("TaskDownloadThread " + threadCounter.getAndIncrement());
             return thread;
