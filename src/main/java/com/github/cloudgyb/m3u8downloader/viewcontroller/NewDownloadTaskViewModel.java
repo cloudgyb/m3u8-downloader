@@ -29,6 +29,10 @@ public class NewDownloadTaskViewModel {
      * 该任务允许使用的最大线程数
      */
     private final DoubleProperty taskMaxThreadCount = new SimpleDoubleProperty();
+    /**
+     * 保存的文件名
+     */
+    private final StringProperty filename = new SimpleStringProperty();
     private final DownloadTaskService downloadTaskService = SpringBeanUtil.getBean(DownloadTaskService.class);
 
     public String getUrl() {
@@ -55,6 +59,13 @@ public class NewDownloadTaskViewModel {
         this.taskMaxThreadCount.set(taskMaxThreadCount);
     }
 
+    public StringProperty filenameProperty() {
+        return filename;
+    }
+
+    public String getFilename() {
+        return filename.get();
+    }
 
     public void download() {
         DownloadTaskEntity entity = convertToDomain();
@@ -77,6 +88,7 @@ public class NewDownloadTaskViewModel {
             maxThread = ApplicationStore.getSystemConfig().getDefaultThreadCount();
         }
         domain.setMaxThreadCount(maxThread);
+        domain.setSaveFilename(getFilename());
         domain.setStage(DownloadTaskStageEnum.NEW.name());
         domain.setStatus(DownloadTaskStageEnum.NEW.name());
         return domain;

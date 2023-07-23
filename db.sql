@@ -11,7 +11,8 @@ CREATE TABLE "task"
     "resolution"           TEXT,
     "max_thread_count"     integer,
     "stage"                TEXT,
-    "status"               TEXT
+    "status"               TEXT,
+    "save_filename"        TEXT
 );
 
 CREATE TABLE "media_segment"

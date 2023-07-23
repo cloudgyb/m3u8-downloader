@@ -75,9 +75,9 @@ public class M3u8DownloaderApp extends Application {
             Stage stage = (Stage) exitConfirm.getDialogPane().getScene().getWindow();
             stage.getIcons().add(icon); // 设置图标
             Button okButton = (Button) exitConfirm.getDialogPane().lookupButton(ButtonType.OK);
-            okButton.setStyle(btnXsStyle + btnDangerStyle);
+            okButton.setStyle(btnSmStyle + btnDangerStyle);
             Button cancelButton = (Button) exitConfirm.getDialogPane().lookupButton(ButtonType.CANCEL);
-            cancelButton.setStyle(btnXsStyle + btnPrimaryStyle);
+            cancelButton.setStyle(btnSmStyle + btnPrimaryStyle);
             Optional<ButtonType> result = exitConfirm.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
                 primaryStage.close();
@@ -117,7 +117,7 @@ public class M3u8DownloaderApp extends Application {
                 }
             }
         } catch (SQLException e) {
-            logger.error("执行初始化 SQL 出错！", e);
+            logger.error("执行初始化 SQL 出错！{}", e.getMessage());
         }
     }
 
