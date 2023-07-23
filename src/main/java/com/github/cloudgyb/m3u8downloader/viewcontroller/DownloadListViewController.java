@@ -99,6 +99,7 @@ public class DownloadListViewController {
         final DownloadTaskViewModel downloadTaskViewModel = this.downloadTable.getItems().get(index);
         downloadTaskViewModel.remove();
         downloadTable.getItems().remove(index);
+        downloadTable.refresh();
     }
 
     class ProgressBarWithLabelTableCell extends TableCell<DownloadTaskViewModel, ProgressAndStatus> {
@@ -122,8 +123,11 @@ public class DownloadListViewController {
                 if (stage != null) {
                     String labelText = stage.getStatus();
                     if (stage == DownloadTaskStageEnum.DOWNLOADING && progressValue != null) {
-                        String s = progressValue * 100 + "";
+                        String s = String.valueOf(progressValue * 100);
                         labelText = (s.length() > 5 ? s.substring(0, 5) : s) + "%";
+                    } else if (stage == DownloadTaskStageEnum.FINISHED) {
+                        downloadTable.getItems().remove(getIndex());
+                        downloadTable.refresh();
                     }
                     label.setText(labelText);
                     setStyleByTaskStatus(label, stage);

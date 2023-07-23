@@ -165,6 +165,7 @@ public class DownloadHistoryViewController {
         }
         downloadTaskService.deleteById(task.getId());
         downloadHistoryTable.getItems().remove(index);
+        downloadHistoryTable.refresh();
     }
 
 }
