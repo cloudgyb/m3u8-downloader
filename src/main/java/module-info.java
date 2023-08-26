@@ -17,11 +17,22 @@ module m3u8downloader {
     requires spring.core;
     requires spring.tx;
     requires org.mybatis;
+    requires io.netty.all;
     requires com.baomidou.mybatis.plus;
     requires com.baomidou.mybatis.plus.annotation;
     requires com.baomidou.mybatis.plus.core;
     requires com.baomidou.mybatis.plus.extension;
     requires com.baomidou.mybatis.plus.boot.starter;
+    requires io.netty.transport;
+    requires io.netty.codec.http;
+    requires io.netty.codec.http2;
+    requires io.netty.handler;
+    requires io.netty.common;
+    requires io.netty.codec;
+    requires io.netty.tcnative.classes.openssl;
+    requires io.netty.internal.tcnative.openssl.windows.x86_64;
+    requires org.bouncycastle.pkix;
+    requires org.bouncycastle.provider;
 
     opens com.github.cloudgyb.m3u8downloader;
     opens com.github.cloudgyb.m3u8downloader.viewcontroller;

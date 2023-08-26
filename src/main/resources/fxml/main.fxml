@@ -7,5 +7,6 @@
     <Tab onSelectionChanged="#newDownloadTaskTabSelected" text="新建下载任务"/>
     <Tab onSelectionChanged="#downloadListTabSelected" text="当前下载"/>
     <Tab onSelectionChanged="#downloadHistoryTabSelected" text="下载历史"/>
+    <Tab onSelectionChanged="#m3u8CaptureTabSelected" text="自动捕获m3u8 URL"/>
     <Tab onSelectionChanged="#downloadSettingTabSelected" text="下载设置"/>
 </TabPane>

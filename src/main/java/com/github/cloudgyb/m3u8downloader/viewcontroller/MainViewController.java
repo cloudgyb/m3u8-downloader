@@ -79,4 +79,17 @@ public class MainViewController {
             tab.setContent(pane);
         }
     }
+
+    public void m3u8CaptureTabSelected() throws IOException {
+        final Tab tab = tabPane.getSelectionModel().getSelectedItem();
+        final boolean selected = tab.isSelected();
+        if (selected) {
+            FXMLLoader loader = new FXMLLoader(MainViewController.
+                    class.getResource("/fxml/capture_m3u8.fxml"));
+            final Pane pane = loader.load();
+            final CaptureM3u8ViewController controller = loader.getController();
+            controller.init();
+            tab.setContent(pane);
+        }
+    }
 }
