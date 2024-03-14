@@ -9,6 +9,17 @@
 <VBox fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.CaptureM3u8ViewController"
       xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
     <HBox alignment="CENTER_RIGHT" prefHeight="32.0" style="-fx-padding: 10;">
+        <Button fx:id="caInstallBtn" mnemonicParsing="false" onAction="#caInstall"
+                prefHeight="38.0" text="安装CA证书">
+            <styleClass>
+                <String fx:value="btn"/>
+                <String fx:value="btn-primary"/>
+            </styleClass>
+            <HBox.margin>
+                <Insets right="10.0"/>
+            </HBox.margin>
+        </Button>
+
         <Button fx:id="proxyServerSwitch" mnemonicParsing="false" onAction="#proxySwitch"
                 prefHeight="38.0" text="启动代理服务器">
             <styleClass>

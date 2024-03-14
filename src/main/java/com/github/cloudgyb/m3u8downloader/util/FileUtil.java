@@ -21,6 +21,10 @@ import java.util.stream.Collectors;
  */
 public final class FileUtil {
     private static final Logger logger = LoggerFactory.getLogger(FileUtil.class);
+    public static String tempDir;
+    static {
+        tempDir = System.getProperty("java.io.tmpdir");
+    }
 
     public static void deleteFileQuiet(File file) {
         if (file.exists()) {

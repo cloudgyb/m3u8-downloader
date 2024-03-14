@@ -2,6 +2,7 @@ package com.github.cloudgyb.m3u8downloader.viewcontroller;
 
 import com.github.cloudgyb.m3u8downloader.domain.ProxyCaptureUrlDomain;
 import com.github.cloudgyb.m3u8downloader.proxy.ProxyApplication;
+import com.github.cloudgyb.m3u8downloader.util.FileUtil;
 import com.github.cloudgyb.m3u8downloader.util.SystemCommandUtil;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -9,13 +10,20 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.FileCopyUtils;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -42,8 +50,16 @@ public class CaptureM3u8ViewController {
             "reg", "delete", "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyServer", "/f"
     };
 
+    private static final String[] verifyCert = {"certutil", "-verifystore", "Root", "Proxy CA"};
+
+    private static final String[] importCertToSystemCommand = {
+            "certutil", "-addstore", "Root", FileUtil.tempDir + File.separator + "M3U8ProxyCACert.crt"
+    };
+
     public static final ConcurrentLinkedDeque<ProxyCaptureUrlDomain> urlDeque = new ConcurrentLinkedDeque<>();
     public static final BlockingQueue<ProxyCaptureUrlDomain> blockingQueue = new LinkedBlockingQueue<>();
+    @FXML
+    private Button caInstallBtn;
     @FXML
     private Button proxyServerSwitch;
     @FXML
@@ -90,6 +106,14 @@ public class CaptureM3u8ViewController {
     public void init() {
         if (ProxyApplication.isRunning.get()) {
             proxyServerSwitch.setText("停止代理服务器");
+        }
+        caInstallBtn.setVisible(false);
+        SystemCommandUtil.CommandExecResult commandExecResult =
+                SystemCommandUtil.execWithExitCodeAndResult(verifyCert);
+        logger.debug(commandExecResult.toString());
+        int exitCode = commandExecResult.getExitCode();
+        if (exitCode != 0) {
+            Platform.runLater(() -> caInstallBtn.setVisible(true));
         }
         urlTable.setRowFactory(rowFactory);
         // 绑定属性
@@ -211,4 +235,35 @@ public class CaptureM3u8ViewController {
             }
         }
     }
+
+    public void caInstall() {
+        File caTempFile = new File(FileUtil.tempDir + File.separator + "M3U8ProxyCACert.crt");
+        ClassPathResource classPathResource = new ClassPathResource("CACert.crt");
+        try {
+            FileCopyUtils.copy(classPathResource.getInputStream(), new FileOutputStream(caTempFile));
+            SystemCommandUtil.CommandExecResult commandExecResult =
+                    SystemCommandUtil.execWithExitCodeAndResult(importCertToSystemCommand);
+            logger.debug(commandExecResult.toString());
+            if (commandExecResult.getExitCode() == 0) {
+                caInstallBtn.setVisible(false);
+                showAlert("CA 根证书已安装！");
+            }
+        } catch (Exception e) {
+            logger.debug(e.toString());
+            showAlert("CA 根证书安装失败！");
+        }
+    }
+
+    private void showAlert(String msg) {
+        final Alert urlErrAlert = new Alert(Alert.AlertType.WARNING);
+        Image icon = new Image("/icon.png");
+        Stage stage = (Stage) urlErrAlert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(icon); // 设置图标
+        urlErrAlert.setHeaderText(msg);
+        final Optional<ButtonType> buttonType = urlErrAlert.showAndWait();
+        if (buttonType.isPresent() && buttonType.get().equals(ButtonType.OK)) {
+            urlErrAlert.close();
+        }
+    }
+
 }
