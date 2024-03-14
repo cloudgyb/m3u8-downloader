@@ -2,10 +2,7 @@ package com.github.cloudgyb.m3u8downloader.proxy.server;
 
 import com.github.cloudgyb.m3u8downloader.proxy.ProxyApplication;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -40,7 +37,7 @@ public class ProxyServer {
         this.authenticationConfig = new ProxyServerAuthenticationConfig(enableProxyAuth, username, password);
     }
 
-    public void start() {
+    public void start(ProxyApplication.StartedCallback callback) {
         ServerBootstrap serverBootstrap = new ServerBootstrap();
         try {
             ChannelFuture future = serverBootstrap
@@ -53,13 +50,24 @@ public class ProxyServer {
                             channel.pipeline()
                                     .addLast("httpServerCodec", new HttpServerCodec())
                                     .addLast("HttpObjAgg", new HttpObjectAggregator(1024))
-                                    .addLast("proxyServer", new ProxyServerHandler(authenticationConfig));
+                                    .addLast("proxyServer", new ProxyServerHandler(authenticationConfig))
+                                    .addLast(new ChannelDuplexHandler() {
+                                        @Override
+                                        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                                            logger.error(cause.getMessage(), cause);
+                                        }
+                                    });
                         }
                     }).bind(host, port);
             future.addListener(future1 -> {
                 if (future1.isSuccess()) {
                     logger.info("Proxy Server listen at {}:{}...", host, port);
+                    callback.started(true);
                     ProxyApplication.onProxyServerStarted();
+                } else {
+                    logger.error(future1.cause().toString());
+                    callback.started(false);
+                    ProxyApplication.onProxyServerStartFailed();
                 }
             });
             serverChannel = future.sync().channel();
@@ -73,11 +81,19 @@ public class ProxyServer {
         }
     }
 
-    public void stop() {
+    public void stop(ProxyApplication.StopCallback callback) {
         if (serverChannel != null) {
             serverChannel.close();
             worker.shutdownGracefully();
-            boss.shutdownGracefully();
+            boss.shutdownGracefully().addListener(future -> {
+                if (future.isSuccess()) {
+                    callback.stopped(true);
+                } else {
+                    callback.stopped(false);
+                }
+            });
+        } else {
+            callback.stopped(true);
         }
     }
 }

@@ -1,6 +1,8 @@
 package com.github.cloudgyb.m3u8downloader.proxy.server;
 
 
+import com.github.cloudgyb.m3u8downloader.viewcontroller.CaptureM3u8ViewController;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -53,7 +55,15 @@ public class HttpApplicationProtocolNegotiationHandler extends ApplicationProtoc
                 .addLast(new SimpleChannelInboundHandler<FullHttpRequest>() {
                     @Override
                     protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) {
-                        System.out.println(msg);
+                        ChannelHandler sslHandler = ctx.channel().pipeline().get("ssl");
+                        String scheme = "http://";
+                        if (sslHandler != null) {
+                            scheme = "https://";
+                        }
+                        String uri = msg.uri();
+                        String host = msg.headers().getAsString(HttpHeaderNames.HOST);
+                        String url = scheme + host + uri;
+                        CaptureM3u8ViewController.addUri(host, url);
                         msg.retain();
                         ctx.channel().attr(targetServerAttrKey).get().writeAndFlush(msg);
                     }

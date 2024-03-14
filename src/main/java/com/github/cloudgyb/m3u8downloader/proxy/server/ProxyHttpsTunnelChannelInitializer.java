@@ -4,6 +4,8 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProtocols;
+import io.netty.handler.ssl.SslProvider;
 
 import javax.net.ssl.SSLException;
 import javax.net.ssl.X509TrustManager;
@@ -13,6 +15,9 @@ public class ProxyHttpsTunnelChannelInitializer extends ChannelInitializer<NioSo
     @Override
     protected void initChannel(NioSocketChannel channel) throws SSLException {
         SslContext sslContext = SslContextBuilder.forClient()
+                .sslProvider(SslProvider.JDK)
+                .protocols(SslProtocols.TLS_v1_3, SslProtocols.TLS_v1_2,
+                        SslProtocols.TLS_v1_1, SslProtocols.TLS_v1)
                 .trustManager(new AllowAllCertX509TrustManager()) // 忽略目标服务器证书校验
                 .build();
         channel.pipeline()

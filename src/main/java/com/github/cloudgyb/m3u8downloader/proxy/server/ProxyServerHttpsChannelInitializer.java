@@ -22,7 +22,7 @@ public class ProxyServerHttpsChannelInitializer extends ChannelInitializer<NioSo
         ByteArrayInputStream certIs = new ByteArrayInputStream(strings[1].getBytes(StandardCharsets.UTF_8));
         SslContextBuilder sslContextBuilder = SslContextBuilder
                 .forServer(certIs, privateKeyIs)
-                .sslProvider(SslProvider.OPENSSL)
+                .sslProvider(SslProvider.JDK)
                 .clientAuth(ClientAuth.NONE);
         ApplicationProtocolConfig apn = new ApplicationProtocolConfig(
                 ApplicationProtocolConfig.Protocol.ALPN,
@@ -31,7 +31,10 @@ public class ProxyServerHttpsChannelInitializer extends ChannelInitializer<NioSo
                 ApplicationProtocolNames.HTTP_1_1,
                 ApplicationProtocolNames.HTTP_2
         );
-        sslContextBuilder.applicationProtocolConfig(apn);
+        sslContextBuilder
+                .protocols(SslProtocols.TLS_v1_3, SslProtocols.TLS_v1_2,
+                        SslProtocols.TLS_v1_1, SslProtocols.TLS_v1)
+                .applicationProtocolConfig(apn);
         sslContext = sslContextBuilder.build();
     }
 

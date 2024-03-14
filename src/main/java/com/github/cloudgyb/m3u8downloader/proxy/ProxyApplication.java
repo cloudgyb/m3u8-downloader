@@ -10,25 +10,38 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author cloudgyb
  */
 public class ProxyApplication {
-    private final static String host = "0.0.0.0";
-    private final static int port = 80;
+    public final static String host = "0.0.0.0";
+    public final static int port = 80;
     public static final AtomicBoolean isRunning = new AtomicBoolean(false);
     private static volatile ProxyServer proxyServer;
 
-    public static void start() {
+    @FunctionalInterface
+    public interface StartedCallback {
+        void started(boolean isStarted);
+    }
+
+    public interface StopCallback {
+        void stopped(boolean isStopped);
+    }
+
+    public static void start(StartedCallback startedCallback) {
         proxyServer = new ProxyServer(host, port, true, "test", "test");
-        new Thread(proxyServer::start).start();
+        new Thread(() -> proxyServer.start(startedCallback)).start();
     }
 
     public static void onProxyServerStarted() {
         isRunning.set(true);
     }
 
-    public static void stopProxyServer() {
-        if(isRunning.get() && proxyServer != null) {
-            proxyServer.stop();
+    public static void stopProxyServer(StopCallback stopCallback) {
+        if (isRunning.get() && proxyServer != null) {
+            proxyServer.stop(stopCallback);
             isRunning.set(false);
+        } else {
+            stopCallback.stopped(true);
         }
     }
 
+    public static void onProxyServerStartFailed() {
+    }
 }

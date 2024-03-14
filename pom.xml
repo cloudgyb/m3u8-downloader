@@ -57,16 +57,6 @@
             <scope>system</scope>
             <systemPath>${pom.basedir}/libs/sqlite-jdbc-3.34.0.jar</systemPath>
         </dependency>
-        <!--<dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>2.0.5</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.4.6</version>
-        </dependency>-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
@@ -92,11 +82,11 @@
             <artifactId>netty-all</artifactId>
             <version>4.1.88.Final</version>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative</artifactId>
             <version>2.0.61.Final</version>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative-classes</artifactId>
@@ -144,7 +134,7 @@
                     <release>${maven.compiler.release}</release>
                 </configuration>
             </plugin>
-            <!--<plugin>
+            <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.6</version>
@@ -156,9 +146,9 @@
                     <jlinkZipName>${project.artifactId}</jlinkZipName>
                     <jlinkImageName>m3u8downloader</jlinkImageName>
                     <launcher>launcher</launcher>
-                    <mainClass>m3u8downloader/com.github.cloudgyb.m3u8downloader.M3u8DownloaderApp</mainClass>
+                    <mainClass>com.github.cloudgyb.m3u8downloader.M3u8DownloaderApp</mainClass>
                 </configuration>
-            </plugin>-->
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

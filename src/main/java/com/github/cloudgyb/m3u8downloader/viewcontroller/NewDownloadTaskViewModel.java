@@ -76,6 +76,25 @@ public class NewDownloadTaskViewModel {
         TaskDownloadThreadManager.getInstance().startDownloadThread(entity);
     }
 
+    public void download(String url) {
+        final DownloadTaskEntity domain = new DownloadTaskEntity();
+        domain.setUrl(url);
+        domain.setCreateTime(new Date());
+        domain.setDownloadDuration(0L);
+        domain.setFinishMediaSegment(0);
+        domain.setTotalMediaSegment(0);
+        int maxThread = ApplicationStore.getSystemConfig().getDefaultThreadCount();
+        domain.setMaxThreadCount(maxThread);
+        domain.setSaveFilename(getFilename());
+        domain.setStage(DownloadTaskStageEnum.NEW.name());
+        domain.setStatus(DownloadTaskStageEnum.NEW.name());
+        downloadTaskService.save(domain);
+        final DownloadTaskViewModel task = new DownloadTaskViewModel(domain);
+        ApplicationStore.getNoFinishedTasks().add(task);
+        // TaskDownloadService 负责整个下载过程
+        TaskDownloadThreadManager.getInstance().startDownloadThread(domain);
+    }
+
     public DownloadTaskEntity convertToDomain() {
         final DownloadTaskEntity domain = new DownloadTaskEntity();
         domain.setUrl(getUrl());

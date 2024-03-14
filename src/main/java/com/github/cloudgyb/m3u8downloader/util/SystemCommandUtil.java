@@ -35,9 +35,9 @@ public final class SystemCommandUtil {
     public static CommandExecResult execWithExitCodeAndResult(String[] cmdarray) {
         InputStream errorStream;
         InputStream inputStream;
-        int exitCode = -1;
-        String stdinOutput = "";
-        String errorOutput = "";
+        int exitCode;
+        String stdinOutput;
+        String errorOutput;
         try {
             ProcessBuilder builder = new ProcessBuilder(cmdarray);
             builder.inheritIO();
@@ -147,6 +147,15 @@ public final class SystemCommandUtil {
 
         public void setStderrOutput(String stderrOutput) {
             this.stderrOutput = stderrOutput;
+        }
+
+        @Override
+        public String toString() {
+            return "CommandExecResult{" +
+                    "exitCode=" + exitCode +
+                    ", stdinOutput='" + stdinOutput + '\'' +
+                    ", stderrOutput='" + stderrOutput + '\'' +
+                    '}';
         }
     }
 }
