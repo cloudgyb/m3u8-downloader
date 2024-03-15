@@ -21,6 +21,7 @@ public class ProxyHttpChannelInitializer extends ChannelInitializer<NioSocketCha
                         Channel proxyServerChannel = ctx.channel().attr(ProxyServerHandler.proxyServerAttrKey).get();
                         proxyServerChannel.writeAndFlush(msg);
                     }
-                });
+                })
+                .addLast(new IdleHandler(10, 10, 20));
     }
 }

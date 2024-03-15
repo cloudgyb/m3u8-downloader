@@ -29,8 +29,11 @@ module m3u8downloader {
     requires io.netty.handler;
     requires io.netty.common;
     requires io.netty.codec;
-    requires io.netty.tcnative.classes.openssl;
+    requires io.netty.buffer;
+    requires io.netty.internal.tcnative.openssl.linux.x86_64;
+    requires io.netty.internal.tcnative.openssl.linux.aarch_64;
     requires io.netty.internal.tcnative.openssl.windows.x86_64;
+    requires io.netty.tcnative.classes.openssl;
     requires org.bouncycastle.pkix;
     requires org.bouncycastle.provider;
 
@@ -55,4 +58,8 @@ module m3u8downloader {
     exports com.github.cloudgyb.m3u8downloader.domain.service;
     opens com.github.cloudgyb.m3u8downloader.domain.service;
     opens com.github.cloudgyb.m3u8downloader.domain.entity;
+    opens com.github.cloudgyb.m3u8downloader.proxy;
+    opens com.github.cloudgyb.m3u8downloader.proxy.server;
+    exports com.github.cloudgyb.m3u8downloader.proxy;
+    exports com.github.cloudgyb.m3u8downloader.proxy.server;
 }

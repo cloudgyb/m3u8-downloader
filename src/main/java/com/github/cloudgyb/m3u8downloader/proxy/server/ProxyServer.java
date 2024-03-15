@@ -6,8 +6,8 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.HttpRequestDecoder;
+import io.netty.handler.codec.http.HttpResponseEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,16 +47,15 @@ public class ProxyServer {
                     .childHandler(new ChannelInitializer<NioSocketChannel>() {
                         @Override
                         protected void initChannel(NioSocketChannel channel) {
-                            channel.pipeline()
-                                    .addLast("httpServerCodec", new HttpServerCodec())
-                                    .addLast("HttpObjAgg", new HttpObjectAggregator(1024))
-                                    .addLast("proxyServer", new ProxyServerHandler(authenticationConfig))
-                                    .addLast(new ChannelDuplexHandler() {
-                                        @Override
-                                        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-                                            logger.error(cause.getMessage(), cause);
-                                        }
-                                    });
+                            ChannelPipeline pipeline = channel.pipeline();
+                            pipeline.addLast("httpRequestDecoder", new HttpRequestDecoder())
+                                    .addLast("httpResponseEncoder", new HttpResponseEncoder());
+                            if (authenticationConfig.enableProxyAuth()) {
+                                pipeline.addLast(new ProxyServerBasicAuthenticationHandler(authenticationConfig));
+                            }
+                            pipeline.addLast("proxyServer", new ProxyServerHandler())
+                                    .addLast("exceptionHandler", ProxyExceptionHandler.getInstance())
+                                    .addLast("idleHandler", new IdleHandler(10, 10, 20));
                         }
                     }).bind(host, port);
             future.addListener(future1 -> {
@@ -86,11 +85,7 @@ public class ProxyServer {
             serverChannel.close();
             worker.shutdownGracefully();
             boss.shutdownGracefully().addListener(future -> {
-                if (future.isSuccess()) {
-                    callback.stopped(true);
-                } else {
-                    callback.stopped(false);
-                }
+                callback.stopped(future.isSuccess());
             });
         } else {
             callback.stopped(true);

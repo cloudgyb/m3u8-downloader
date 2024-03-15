@@ -31,10 +31,7 @@ public class ProxyServerHttpsChannelInitializer extends ChannelInitializer<NioSo
                 ApplicationProtocolNames.HTTP_1_1,
                 ApplicationProtocolNames.HTTP_2
         );
-        sslContextBuilder
-                .protocols(SslProtocols.TLS_v1_3, SslProtocols.TLS_v1_2,
-                        SslProtocols.TLS_v1_1, SslProtocols.TLS_v1)
-                .applicationProtocolConfig(apn);
+        sslContextBuilder.applicationProtocolConfig(apn);
         sslContext = sslContextBuilder.build();
     }
 
