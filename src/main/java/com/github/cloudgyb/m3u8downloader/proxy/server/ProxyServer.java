@@ -48,14 +48,14 @@ public class ProxyServer {
                         @Override
                         protected void initChannel(NioSocketChannel channel) {
                             ChannelPipeline pipeline = channel.pipeline();
-                            pipeline.addLast("httpRequestDecoder", new HttpRequestDecoder())
-                                    .addLast("httpResponseEncoder", new HttpResponseEncoder());
+                            pipeline.addLast("httpConnectRequestDecoder", new HttpRequestDecoder())
+                                    .addLast("httpConnectResponseEncoder", new HttpResponseEncoder());
                             if (authenticationConfig.enableProxyAuth()) {
                                 pipeline.addLast(new ProxyServerBasicAuthenticationHandler(authenticationConfig));
                             }
                             pipeline.addLast("proxyServer", new ProxyServerHandler())
                                     .addLast("exceptionHandler", ProxyExceptionHandler.getInstance())
-                                    .addLast("idleHandler", new IdleHandler(10, 10, 20));
+                                    .addLast("idleHandler", new IdleHandler(60, 60, 120));
                         }
                     }).bind(host, port);
             future.addListener(future1 -> {

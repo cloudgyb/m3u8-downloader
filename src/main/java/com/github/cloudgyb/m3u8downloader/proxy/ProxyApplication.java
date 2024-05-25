@@ -25,7 +25,7 @@ public class ProxyApplication {
     }
 
     public static void start(StartedCallback startedCallback) {
-        proxyServer = new ProxyServer(host, port, true, "test", "test");
+        proxyServer = new ProxyServer(host, port);
         new Thread(() -> proxyServer.start(startedCallback)).start();
     }
 

@@ -1,17 +1,13 @@
 package com.github.cloudgyb.m3u8downloader.proxy.server;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.*;
 import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +21,8 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     final static AttributeKey<Channel> targetServerAttrKey = AttributeKey.newInstance("targetServerChannel");
     final static AttributeKey<Channel> proxyServerAttrKey = AttributeKey.newInstance("proxyServerChannel");
+    final static AttributeKey<HttpConnectMethodHostAndPortDecoder.HostAndPort> proxyServerHostAndPortAttrKey =
+            AttributeKey.newInstance("proxyServerHostAndPort");
     private final static NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup();
     private final Bootstrap httpBootstrap = new Bootstrap();
     private final Bootstrap httpsBootstrap = new Bootstrap();
@@ -47,13 +45,13 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof HttpRequest req) {
             HttpMethod method = req.method();
             if (method.equals(HttpMethod.CONNECT)) { // https 代理处理
-                String uri = req.uri();
-                String[] split = uri.split(":");
-                String host = split[0];
-                String port = split[1];
+                HttpConnectMethodHostAndPortDecoder.HostAndPort hostAndPort =
+                        HttpConnectMethodHostAndPortDecoder.decoder(req);
+                String host = hostAndPort.getHost();
                 Channel proxyServerChannel = ctx.channel();
                 // 连接到目标服务器
-                Channel targetServerChannel = connectToTargetServer(host, Integer.parseInt(port), proxyServerChannel, true);
+                Channel targetServerChannel = connectToTargetServer(hostAndPort, proxyServerChannel, true,
+                        req.protocolVersion());
                 // 目标服务器 channel 与 代理服务器 channel 互相绑定，用于互相转发数据
                 proxyServerChannel.attr(targetServerAttrKey).set(targetServerChannel);
                 targetServerChannel.attr(proxyServerAttrKey).set(proxyServerChannel);
@@ -84,16 +82,18 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
                     host = hostHeader;
                     port = "80";
                 }
-                Channel targetServerChannel = connectToTargetServer(host, Integer.parseInt(port), ctx.channel(),
-                        false);
+                Channel targetServerChannel = connectToTargetServer(
+                        new HttpConnectMethodHostAndPortDecoder.HostAndPort(host, Integer.parseInt(port)),
+                        ctx.channel(), false, req.protocolVersion());
                 Channel proxyServerChannel = ctx.channel();
                 // 目标服务器 channel 与 代理服务器 channel 互相绑定，用于互相转发数据
                 proxyServerChannel.attr(targetServerAttrKey).set(targetServerChannel);
                 targetServerChannel.attr(proxyServerAttrKey).set(proxyServerChannel);
+                ProxyServerHttpChannelInitializer.getInstance().initChannel((NioSocketChannel) proxyServerChannel);
                 targetServerChannel.writeAndFlush(req);
             }
-            ctx.pipeline().remove("httpRequestDecoder");
-            ctx.pipeline().remove("httpResponseEncoder");
+            ctx.pipeline().remove("httpConnectRequestDecoder");
+            ctx.pipeline().remove("httpConnectResponseEncoder");
         } else {
             Channel targetServerChannel = ctx.channel().attr(targetServerAttrKey).get();
             targetServerChannel.writeAndFlush(msg);
@@ -103,21 +103,26 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
     /**
      * 连接到目标服务器
      *
-     * @param host 主机名或者 ip 地址
-     * @param port 端口号
+     * @param hostAndPort 主机名或者 ip 地址和端口号
      * @return 连接建立就绪的 channel
      */
-    private Channel connectToTargetServer(String host, int port, Channel proxyServerChannel, boolean isHttps) {
+    private Channel connectToTargetServer(HttpConnectMethodHostAndPortDecoder.HostAndPort hostAndPort,
+                                          Channel proxyServerChannel, boolean isHttps, HttpVersion httpVersion) {
         Bootstrap bootstrap = isHttps ? httpsBootstrap : httpBootstrap;
-
-        ChannelFuture future = bootstrap
-                .connect(host, port);
+        String host = hostAndPort.getHost();
+        int port = hostAndPort.getPort();
+        ChannelFuture future = bootstrap.connect(host, port);
+        // 将主机名和端口信息绑定到代理服务器连接 channel，
+        // 用于创建 SSLHandler ，SSLEngine 设置 TLS Server_name 扩展，以避免 TLS 握手失败
+        future.channel().attr(proxyServerHostAndPortAttrKey).set(hostAndPort);
 
         future.addListener(future1 -> {
             if (future1.isSuccess()) {
                 logger.info("目标服务器{}：{}连接已建立！", host, port);
             } else {
-                proxyServerChannel.writeAndFlush(Unpooled.EMPTY_BUFFER)
+                DefaultFullHttpResponse resp502 = new DefaultFullHttpResponse(httpVersion,
+                        HttpResponseStatus.BAD_GATEWAY);
+                proxyServerChannel.writeAndFlush(resp502)
                         .addListener(future2 -> proxyServerChannel.close());
                 logger.error("目标服务器%s:%d连接建立失败！".formatted(host, port), future1.cause());
             }

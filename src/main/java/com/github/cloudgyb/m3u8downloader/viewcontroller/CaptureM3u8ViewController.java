@@ -188,12 +188,12 @@ public class CaptureM3u8ViewController {
                     {
                         if (isStarted) {
                             Platform.runLater(() -> proxyServerSwitch.setText("停止代理服务器"));
-                            SystemCommandUtil.CommandExecResult commandExecResult =
+                            /*SystemCommandUtil.CommandExecResult commandExecResult =
                                     SystemCommandUtil.execWithExitCodeAndResult(windowsProxyEnableCommand);
                             logger.debug(commandExecResult.toString());
                             SystemCommandUtil.CommandExecResult commandExecResult1 =
                                     SystemCommandUtil.execWithExitCodeAndResult(windowsProxyServerSetCommand);
-                            logger.debug(commandExecResult1.toString());
+                            logger.debug(commandExecResult1.toString());*/
                         } else {
                             Platform.runLater(() -> proxyServerSwitch.setText("启动代理服务器"));
                         }
