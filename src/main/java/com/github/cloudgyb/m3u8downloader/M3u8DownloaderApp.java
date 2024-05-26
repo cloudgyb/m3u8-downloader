@@ -1,9 +1,12 @@
 package com.github.cloudgyb.m3u8downloader;
 
 import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
+import com.github.cloudgyb.m3u8downloader.signal.RepeatProcessStartupSignalHandler;
+import com.github.cloudgyb.m3u8downloader.signal.SignalServer;
 import com.github.cloudgyb.m3u8downloader.util.SpringBeanUtil;
 import com.github.cloudgyb.m3u8downloader.viewcontroller.MainViewController;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -23,6 +26,10 @@ import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.BindException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -42,18 +49,22 @@ import static com.github.cloudgyb.m3u8downloader.viewcontroller.BootstrapStyle.*
 @SpringBootApplication
 public class M3u8DownloaderApp extends Application {
     private static final Logger logger = LoggerFactory.getLogger(M3u8DownloaderApp.class);
+    private static volatile Stage primaryStage;
+    private static final int signalServerPort = 65530;
+    private static SignalServer signalServer;
 
     static {
         final LogManager logManager = LogManager.getLogManager();
         try {
             logManager.readConfiguration(M3u8DownloaderApp.class.getResourceAsStream("/logging.properties"));
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
         }
     }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        M3u8DownloaderApp.primaryStage = primaryStage;
         final FXMLLoader loader = new FXMLLoader(M3u8DownloaderApp.class.getResource("/fxml/main.fxml"));
         final TabPane pane = loader.load();
         final MainViewController controller = loader.getController();
@@ -89,6 +100,35 @@ public class M3u8DownloaderApp extends Application {
     }
 
     public static void main(String[] args) {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                if (signalServer != null) {
+                    signalServer.stop();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }));
+        try {
+            signalServer = new SignalServer(signalServerPort);
+            signalServer.signalHandler(new RepeatProcessStartupSignalHandler())
+                    .start();
+        } catch (IOException e) {
+            if (e instanceof BindException) {
+                System.err.println("信号处理端口已经占用，已经有进程启动，发送信号到已有进程...");
+                try (Socket socket = new Socket()) {
+                    socket.connect(new InetSocketAddress(signalServerPort));
+                    OutputStream outputStream = socket.getOutputStream();
+                    outputStream
+                            .write(RepeatProcessStartupSignalHandler.signal.getBytes(StandardCharsets.UTF_8));
+                    outputStream.flush();
+                    outputStream.close();
+                } catch (IOException ex) {
+                    System.err.println("发送信号到已有进程发生异常：" + ex.getMessage());
+                }
+                System.exit(0);
+            }
+        }
         SpringApplication.run(M3u8DownloaderApp.class);
         initDatabase();
         launch(args);
@@ -130,5 +170,11 @@ public class M3u8DownloaderApp extends Application {
         }
         System.out.println("Close application...");
         System.exit(0);
+    }
+
+    public static void toFront() {
+        if (primaryStage != null) {
+            Platform.runLater(() -> primaryStage.toFront());
+        }
     }
 }
