@@ -1,0 +1,9 @@
+{
+  "name": "com.github.cloudgyb.m3u8downloader",
+  "description": "M3u8downloader Native Messaging Application",
+  "path": "launcher.bat", // The path can be relative only on Windows OS!
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://peaoifnhmeahlmonlebehcgefjfmocpc/"
+  ]
+}

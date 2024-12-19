@@ -38,10 +38,12 @@ module m3u8downloader {
     exports com.github.cloudgyb.m3u8downloader.m3u8;
     exports com.github.cloudgyb.m3u8downloader.domain;
     exports com.github.cloudgyb.m3u8downloader.event;
+    exports com.github.cloudgyb.m3u8downloader.crx;
     opens com.github.cloudgyb.m3u8downloader.event;
     opens com.github.cloudgyb.m3u8downloader.domain;
     exports com.github.cloudgyb.m3u8downloader.domain.entity;
     exports com.github.cloudgyb.m3u8downloader.domain.service;
     opens com.github.cloudgyb.m3u8downloader.domain.service;
     opens com.github.cloudgyb.m3u8downloader.domain.entity;
+    opens com.github.cloudgyb.m3u8downloader.crx;
 }

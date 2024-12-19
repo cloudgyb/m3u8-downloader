@@ -1,5 +1,6 @@
 package com.github.cloudgyb.m3u8downloader;
 
+import com.github.cloudgyb.m3u8downloader.crx.NativeMessage;
 import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
 import com.github.cloudgyb.m3u8downloader.signal.RepeatProcessStartupSignalHandler;
 import com.github.cloudgyb.m3u8downloader.signal.SignalServer;
@@ -48,7 +49,7 @@ import static com.github.cloudgyb.m3u8downloader.viewcontroller.BootstrapStyle.*
  */
 @SpringBootApplication
 public class M3u8DownloaderApp extends Application {
-    private static final Logger logger = LoggerFactory.getLogger(M3u8DownloaderApp.class);
+    private static Logger logger;
     private static volatile Stage primaryStage;
     private static final int signalServerPort = 65530;
     private static SignalServer signalServer;
@@ -57,6 +58,7 @@ public class M3u8DownloaderApp extends Application {
         final LogManager logManager = LogManager.getLogManager();
         try {
             logManager.readConfiguration(M3u8DownloaderApp.class.getResourceAsStream("/logging.properties"));
+            logger = LoggerFactory.getLogger(M3u8DownloaderApp.class);
         } catch (IOException e) {
             System.err.println(e.getMessage());
         }
@@ -129,6 +131,11 @@ public class M3u8DownloaderApp extends Application {
                 System.exit(0);
             }
         }
+        new Thread(() -> {
+            logger.info("-----------------test");
+            String s = NativeMessage.nativeMsgRead();
+            logger.info(s);
+        }).start();
         SpringApplication.run(M3u8DownloaderApp.class);
         initDatabase();
         launch(args);
