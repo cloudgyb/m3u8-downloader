@@ -1,25 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.layout.StackPane?>
-<StackPane fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.DownloadHistoryViewController"
-           xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
-    <TableView fx:id="downloadHistoryTable">
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.DownloadHistoryViewController">
+    <ToolBar nodeOrientation="RIGHT_TO_LEFT" StackPane.alignment="TOP_RIGHT">
+        <Button id="deleteAll" defaultButton="true" disable="true" mnemonicParsing="false"
+                style="-fx-start-margin: 0;-fx-end-margin: 0" text="删除选择" textFill="#c73535"/>
+    </ToolBar>
+    <TableView fx:id="downloadHistoryTable" StackPane.alignment="CENTER">
         <columns>
-            <TableColumn fx:id="idColumn" text="ID" style="-fx-alignment: center"/>
-            <TableColumn fx:id="urlColumn" text="URL" style="-fx-alignment: center"/>
-            <TableColumn fx:id="createTimeColumn" text="创建时间" style="-fx-alignment: center"/>
-            <TableColumn fx:id="finishTimeColumn" text="完成时间" sortType="DESCENDING" style="-fx-alignment: center"/>
-            <TableColumn fx:id="durationColumn" text="耗时" style="-fx-alignment: center"/>
+            <TableColumn fx:id="checkColumn" style="-fx-alignment: center" prefWidth="40.0" resizable="false" sortable="false">
+                <graphic>
+                    <CheckBox mnemonicParsing="false"/>
+                </graphic>
+            </TableColumn>
+            <TableColumn fx:id="idColumn" style="-fx-alignment: center" text="ID"/>
+            <TableColumn fx:id="urlColumn" style="-fx-alignment: center" text="URL"/>
+            <TableColumn fx:id="createTimeColumn" style="-fx-alignment: center" text="创建时间"/>
+            <TableColumn fx:id="finishTimeColumn" sortType="DESCENDING" style="-fx-alignment: center" text="完成时间"/>
+            <TableColumn fx:id="durationColumn" style="-fx-alignment: center" text="耗时"/>
             <TableColumn fx:id="operaColumn" maxWidth="-1.0" minWidth="190.0" prefWidth="190.0" sortable="false"
-                         text="操作" style="-fx-alignment: center"/>
+                         style="-fx-alignment: center" text="操作"/>
         </columns>
         <columnResizePolicy>
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
         </columnResizePolicy>
+        <padding>
+            <Insets bottom="2.0" left="2.0" right="2.0" top="2.0"/>
+        </padding>
         <StackPane.margin>
-            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="35.0"/>
         </StackPane.margin>
     </TableView>
 </StackPane>
