@@ -17,10 +17,10 @@ import java.util.List;
  * @since 2023/03/23 10:59:13
  */
 public final class FfmpegUtil {
-    private static final Logger logger = LoggerFactory.getLogger(FileUtil.class);
+    private static final Logger logger = LoggerFactory.getLogger(FfmpegUtil.class);
 
     public static void mergeTS(List<String> sourceFiles, String targetFile, boolean deleteSourceFiles) throws IOException {
-        ApplicationConfig config = SpringBeanUtil.getBean(ApplicationConfig.class);
+        ApplicationConfig config = ApplicationConfig.getInstance();
         File tsFileList = File.createTempFile("m3u8_ts_list", ".txt");
         try (PrintWriter fileWriter = new PrintWriter(tsFileList, StandardCharsets.UTF_8)) {
             for (String sourceFile : sourceFiles) {

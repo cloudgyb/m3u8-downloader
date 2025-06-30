@@ -1,10 +1,10 @@
 package com.github.cloudgyb.m3u8downloader;
 
+import com.github.cloudgyb.m3u8downloader.database.DatabaseInitializer;
 import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
 import com.github.cloudgyb.m3u8downloader.signal.HttpServerHandler;
 import com.github.cloudgyb.m3u8downloader.signal.RepeatProcessStartupSignalHandler;
 import com.github.cloudgyb.m3u8downloader.signal.SignalServer;
-import com.github.cloudgyb.m3u8downloader.util.SpringBeanUtil;
 import com.github.cloudgyb.m3u8downloader.viewcontroller.MainViewController;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -22,15 +22,11 @@ import org.slf4j.LoggerFactory;
 
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.LogManager;
@@ -125,7 +121,7 @@ public class M3u8DownloaderApp extends Application {
                 System.exit(0);
             }
         }
-        initDatabase();
+        DatabaseInitializer.initDatabase();
         launch(args);
     }
 

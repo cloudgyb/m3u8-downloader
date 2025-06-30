@@ -17,7 +17,6 @@ import com.github.cloudgyb.m3u8downloader.model.ProgressAndStatus;
 import com.github.cloudgyb.m3u8downloader.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.lang.NonNull;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -31,6 +30,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+/**
+ * 任务下载线程
+ *
+ * @author cloudgyb
+ * @since 2025/06/30 16:50
+ */
 public class TaskDownloadThread extends Thread {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(
@@ -39,8 +44,8 @@ public class TaskDownloadThread extends Thread {
             new ThreadPoolExecutor.AbortPolicy());
     private final M3U8Parser m3U8Parser = new M3U8Parser();
     private final DownloadTaskEntity task;
-    private final MediaSegmentService mediaSegmentService = SpringBeanUtil.getBean(MediaSegmentService.class);
-    private final DownloadTaskService downloadTaskService = SpringBeanUtil.getBean(DownloadTaskService.class);
+    private final MediaSegmentService mediaSegmentService = MediaSegmentService.getInstance();
+    private final DownloadTaskService downloadTaskService = DownloadTaskService.getInstance();
     private final DownloadTaskStatusChangeEventNotifier eventNotifier = DownloadTaskStatusChangeEventNotifier.INSTANCE;
     private final AtomicBoolean isStopped = new AtomicBoolean(true);
     /**
@@ -133,7 +138,7 @@ public class TaskDownloadThread extends Thread {
             List<String> fileSegments = list.stream().map(MediaSegmentEntity::getFilePath).collect(Collectors.toList());
             String downloadDir = ApplicationStore.getSystemConfig().getDownloadDir();
             String saveFilename = task.getSaveFilename();
-            if (saveFilename == null || saveFilename.trim().equals("")) {
+            if (saveFilename == null || saveFilename.trim().isEmpty()) {
                 saveFilename = String.valueOf(tid);
             }
             String targetFilePath = downloadDir + File.separator + saveFilename + ".mp4";
@@ -195,7 +200,6 @@ public class TaskDownloadThread extends Thread {
                         long endTime = System.currentTimeMillis();
                         long duration = endTime - staterTime;
                         mediaSegmentEntity.setDownloadDuration(duration);
-                        //publishDownloadRate(tempFile.length(), duration);
                         mediaSegmentService.updateById(mediaSegmentEntity);
                         if (logger.isInfoEnabled()) {
                             logger.info("任务(ID:{})媒体片段下载完成{}", mediaSegmentEntity.getTaskId(), url);
@@ -324,7 +328,7 @@ public class TaskDownloadThread extends Thread {
         private final AtomicInteger threadCounter = new AtomicInteger(0);
 
         @Override
-        public Thread newThread(@NonNull Runnable runnable) {
+        public Thread newThread(Runnable runnable) {
             Thread thread = new Thread(runnable);
             thread.setName("TaskDownloadThread " + threadCounter.getAndIncrement());
             return thread;

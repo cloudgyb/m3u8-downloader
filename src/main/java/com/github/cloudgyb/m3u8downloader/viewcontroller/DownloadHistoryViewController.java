@@ -2,7 +2,6 @@ package com.github.cloudgyb.m3u8downloader.viewcontroller;
 
 import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
 import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
-import com.github.cloudgyb.m3u8downloader.util.SpringBeanUtil;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -26,7 +25,7 @@ import java.util.List;
  */
 public class DownloadHistoryViewController {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final DownloadTaskService downloadTaskService = SpringBeanUtil.getBean(DownloadTaskService.class);
+    private final DownloadTaskService downloadTaskService = DownloadTaskService.getInstance();
     @FXML
     private TableView<DownloadTaskEntity> downloadHistoryTable;
     @FXML

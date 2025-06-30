@@ -1,6 +1,5 @@
 package com.github.cloudgyb.m3u8downloader.database;
 
-import com.github.cloudgyb.m3u8downloader.util.SpringBeanUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +20,7 @@ public final class DatabaseInitializer {
     private static final Logger logger = LoggerFactory.getLogger(DatabaseInitializer.class);
     private static final String SQL_FILE = "/db.sql";
 
-    private static void initDatabase() {
+    public static void initDatabase() {
         String sql;
         try (InputStream inputStream = DatabaseInitializer.class.getResourceAsStream(SQL_FILE)) {
             if (inputStream == null) {
@@ -34,8 +33,7 @@ public final class DatabaseInitializer {
             logger.error("读取初始化 sql 文件失败！", e);
             return;
         }
-        try (SqlSession sqlSession = sessionFactory.openSession();
-             Connection connection = sqlSession.getConnection()) {
+        try (Connection connection = DBUtil.getConnection()) {
             String[] sqls = sql.split(";");
             for (String s : sqls) {
                 try (PreparedStatement ps = connection.prepareStatement(s)) {

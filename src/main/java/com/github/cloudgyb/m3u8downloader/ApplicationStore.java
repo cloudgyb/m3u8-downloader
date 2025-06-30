@@ -1,13 +1,12 @@
 package com.github.cloudgyb.m3u8downloader;
 
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStatusEnum;
-import com.github.cloudgyb.m3u8downloader.domain.SystemConfig;
-import com.github.cloudgyb.m3u8downloader.domain.SystemConfigDao;
+import com.github.cloudgyb.m3u8downloader.domain.entity.SystemConfig;
+import com.github.cloudgyb.m3u8downloader.domain.dao.SystemConfigDao;
 import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
 import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
 import com.github.cloudgyb.m3u8downloader.download.TaskDownloadThreadManager;
 import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
-import com.github.cloudgyb.m3u8downloader.util.SpringBeanUtil;
 
 import java.io.File;
 import java.util.List;
@@ -22,7 +21,7 @@ public class ApplicationStore {
     private static final String workDir;
     private static final String tmpDir;
     private static volatile SystemConfig systemConfig;
-    private final static DownloadTaskService downloadTaskService = SpringBeanUtil.getBean(DownloadTaskService.class);
+    private final static DownloadTaskService downloadTaskService = DownloadTaskService.getInstance();
 
     static {
         List<DownloadTaskEntity> list = downloadTaskService.getAllNotFinishedTask();

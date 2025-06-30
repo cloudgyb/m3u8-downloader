@@ -16,6 +16,8 @@ module m3u8downloader {
     opens com.github.cloudgyb.m3u8downloader.domain to javafx.fxml;
     opens com.github.cloudgyb.m3u8downloader.domain.service to javafx.fxml;
     opens com.github.cloudgyb.m3u8downloader.domain.entity to javafx.fxml;
+    opens com.github.cloudgyb.m3u8downloader.domain.dao to javafx.fxml;
+
 
     exports com.github.cloudgyb.m3u8downloader;
     exports com.github.cloudgyb.m3u8downloader.conf;
@@ -28,6 +30,8 @@ module m3u8downloader {
     exports com.github.cloudgyb.m3u8downloader.event;
     exports com.github.cloudgyb.m3u8downloader.domain.entity;
     exports com.github.cloudgyb.m3u8downloader.domain.service;
+    exports com.github.cloudgyb.m3u8downloader.database;
+    exports com.github.cloudgyb.m3u8downloader.domain.dao;
 
     uses org.sqlite.JDBC;
 }

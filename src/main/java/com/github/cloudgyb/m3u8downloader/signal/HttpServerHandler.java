@@ -5,19 +5,20 @@ import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStageEnum;
 import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
 import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
 import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
-import com.github.cloudgyb.m3u8downloader.util.SpringBeanUtil;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 /**
+ * 浏览器插件通知处理器
+ * 接受自动发现的 m3u8 链接，并创建下载任务
+ *
  * @author cloudgyb
  * @since 2024/12/20 20:22
  */
 public class HttpServerHandler implements SignalHandler {
-    private volatile DownloadTaskService downloadTaskService;
-
+    private final DownloadTaskService downloadTaskService = DownloadTaskService.getInstance();
 
     @Override
     public boolean canHandle(String signal) {
@@ -26,20 +27,11 @@ public class HttpServerHandler implements SignalHandler {
 
     @Override
     public void handle(String signal) {
-        if (downloadTaskService == null) {
-            synchronized (this) {
-                if (downloadTaskService == null) {
-                    downloadTaskService = SpringBeanUtil.getBean(DownloadTaskService.class);
-                }
-            }
-        }
         String[] split = signal.split("\r\n\r\n");
         String[] split1 = split[1].split("=");
         String url = split1[1];
-        System.out.println(url);
         String decodeUrl = URLDecoder.decode(url, StandardCharsets.UTF_8);
-        System.out.println(decodeUrl);
-        final DownloadTaskEntity entity = new DownloadTaskEntity();
+        DownloadTaskEntity entity = new DownloadTaskEntity();
         entity.setUrl(decodeUrl);
         entity.setCreateTime(new Date());
         entity.setDownloadDuration(0L);
@@ -53,8 +45,5 @@ public class HttpServerHandler implements SignalHandler {
         downloadTaskService.save(entity);
         final DownloadTaskViewModel task = new DownloadTaskViewModel(entity);
         ApplicationStore.getNoFinishedTasks().add(task);
-         /*
-        // TaskDownloadService 负责整个下载过程
-        TaskDownloadThreadManager.getInstance().startDownloadThread(entity);*/
     }
 }

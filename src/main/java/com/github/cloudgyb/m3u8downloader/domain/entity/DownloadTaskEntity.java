@@ -1,8 +1,5 @@
 package com.github.cloudgyb.m3u8downloader.domain.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStageEnum;
 import com.github.cloudgyb.m3u8downloader.util.DateFormatter;
 
@@ -14,10 +11,10 @@ import java.util.Date;
  * @author geng
  * @since 2023/03/16 21:45:29
  */
-@TableName("task")
+//@TableName("task")
 @SuppressWarnings("unused")
 public class DownloadTaskEntity {
-    @TableId(type = IdType.AUTO)
+    //@TableId(type = IdType.AUTO)
     private Integer id;
     private String url;
     private Date createTime;
