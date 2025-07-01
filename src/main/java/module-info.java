@@ -5,9 +5,10 @@ module m3u8downloader {
     requires java.sql;
     requires java.net.http;
     requires org.kordamp.bootstrapfx.core;
-    requires m3u8.parser;
+    //requires m3u8.parser;
     requires org.xerial.sqlitejdbc;
     requires org.slf4j;
+    requires java.compiler;
     opens com.github.cloudgyb.m3u8downloader;
     opens com.github.cloudgyb.m3u8downloader.viewcontroller;
     opens com.github.cloudgyb.m3u8downloader.model;

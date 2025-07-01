@@ -33,11 +33,11 @@
             <artifactId>javafx-media</artifactId>
             <version>${javafx.version}</version>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>io.lindstrom</groupId>
             <artifactId>m3u8-parser</artifactId>
             <version>0.24</version>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>org.kordamp.bootstrapfx</groupId>
             <artifactId>bootstrapfx-core</artifactId>
