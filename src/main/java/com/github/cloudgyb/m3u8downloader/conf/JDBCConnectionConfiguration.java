@@ -21,7 +21,7 @@ public class JDBCConnectionConfiguration {
                     Properties properties = new Properties();
                     try {
                         properties.load(JDBCConnectionConfiguration.class.getClassLoader()
-                                .getResourceAsStream("/application.properties"));
+                                .getResourceAsStream("application.properties"));
                     } catch (Exception e) {
                         throw new RuntimeException("未找到 application.properties 文件！");
                     }

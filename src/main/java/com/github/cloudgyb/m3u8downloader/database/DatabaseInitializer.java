@@ -36,6 +36,7 @@ public final class DatabaseInitializer {
         try (Connection connection = DBUtil.getConnection()) {
             String[] sqls = sql.split(";");
             for (String s : sqls) {
+                s = s.trim();
                 try (PreparedStatement ps = connection.prepareStatement(s)) {
                     boolean isSuccess = ps.execute();
                     if (isSuccess) {
@@ -43,6 +44,7 @@ public final class DatabaseInitializer {
                     }
                 }
             }
+            connection.commit();
         } catch (SQLException e) {
             logger.error("执行初始化 SQL 出错！{}", e.getMessage());
         }

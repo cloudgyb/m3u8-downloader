@@ -24,7 +24,7 @@ public class ApplicationConfig {
                     Properties properties = new Properties();
                     try {
                         properties.load(ApplicationConfig.class.getClassLoader()
-                                .getResourceAsStream("/application.properties"));
+                                .getResourceAsStream("application.properties"));
                     } catch (Exception e) {
                         throw new RuntimeException("未找到 application.properties 文件！");
                     }

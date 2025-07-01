@@ -34,8 +34,7 @@ public class DownloadTaskDao implements IDao<DownloadTaskEntity, Integer> {
     @Override
     public int insert(DownloadTaskEntity entity) {
         try (Connection connection = DBUtil.getConnection()) {
-            try (PreparedStatement ps = connection.prepareStatement(insertSQL)) {
-
+            try (PreparedStatement ps = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setString(1, entity.getUrl());
                 ps.setDate(2, new Date(entity.getCreateTime().getTime()));
                 ps.setDate(3, entity.getFinishedTime() == null ? null : new Date(entity.getFinishedTime().getTime()));
@@ -49,6 +48,11 @@ public class DownloadTaskDao implements IDao<DownloadTaskEntity, Integer> {
                 ps.setString(11, entity.getStatus());
                 ps.setString(12, entity.getSaveFilename());
                 int i = ps.executeUpdate();
+                ResultSet generatedKeys = ps.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    entity.setId(generatedKeys.getInt(1));
+                }
+                generatedKeys.close();
                 connection.commit();
                 return i;
             } catch (SQLException e) {

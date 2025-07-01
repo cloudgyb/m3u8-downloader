@@ -40,9 +40,9 @@ public class MediaSegmentDao implements IDao<MediaSegmentEntity, Integer> {
                 ps.setInt(1, entity.getTaskId());
                 ps.setString(2, entity.getUrl());
                 ps.setLong(3, entity.getDuration());
-                ps.setLong(4, entity.getDownloadDuration());
-                ps.setBoolean(5, entity.getFinished());
-                ps.setString(6, entity.getFilePath());
+                ps.setLong(4, entity.getDownloadDuration() == null ? 0 : entity.getDownloadDuration());
+                ps.setBoolean(5, entity.getFinished() != null && entity.getFinished());
+                ps.setString(6, entity.getFilePath() == null ? "" : entity.getFilePath());
                 int i = ps.executeUpdate();
                 connection.commit();
                 return i;

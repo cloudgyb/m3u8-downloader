@@ -5,10 +5,7 @@ import com.github.cloudgyb.m3u8downloader.domain.entity.SystemConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,16 +29,22 @@ public class SystemConfigDao {
         ResultSet resultSet = null;
         try {
             connection = DBUtil.getConnection();
-            ps = connection.prepareStatement(insertSQL);
+            ps = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
             ps.setInt(1, 1);
             ps.setString(2, systemConfig.getDownloadDir());
             ps.setInt(3, systemConfig.getDefaultThreadCount());
-            ps.executeUpdate();
+            int i = ps.executeUpdate();
+            if (i == 1) {
+                log.info("insert system config success");
+            } else {
+                log.warn("insert system config failed");
+            }
             resultSet = ps.getGeneratedKeys();
             if (resultSet.next()) {
                 final int id = resultSet.getInt(1);
                 systemConfig.setId(id);
             }
+            connection.commit();
         } catch (SQLException e) {
             log.error("database exception", e);
             throw new RuntimeException("database exception");
@@ -64,7 +67,13 @@ public class SystemConfigDao {
             ps.setString(1, systemConfig.getDownloadDir());
             ps.setInt(2, systemConfig.getDefaultThreadCount());
             ps.setInt(3, 1);
-            ps.executeUpdate();
+            int i = ps.executeUpdate();
+            if (i == 1) {
+                log.info("update system config success");
+            } else {
+                log.warn("update system config failed");
+            }
+            connection.commit();
         } catch (SQLException e) {
             throw new RuntimeException("database exception");
         } finally {
