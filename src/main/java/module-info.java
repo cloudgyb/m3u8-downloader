@@ -9,6 +9,7 @@ module m3u8downloader {
     requires org.xerial.sqlitejdbc;
     requires org.slf4j;
     requires java.compiler;
+    requires ch.qos.logback.classic;
     opens com.github.cloudgyb.m3u8downloader;
     opens com.github.cloudgyb.m3u8downloader.viewcontroller;
     opens com.github.cloudgyb.m3u8downloader.model;
@@ -35,4 +36,5 @@ module m3u8downloader {
     exports com.github.cloudgyb.m3u8downloader.domain.dao;
 
     uses org.sqlite.JDBC;
+    uses ch.qos.logback.classic.spi.LogbackServiceProvider;
 }

@@ -42,7 +42,7 @@ public class SignalServer {
             }
             isRunning = true;
         }
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             while (isRunning) {
                 String signal = "";
                 try (Socket socket = serverSocket.accept()) {
@@ -55,7 +55,8 @@ public class SignalServer {
                         while ((n = inputStream.read(buffer)) != -1) {
                             baos.write(buffer, 0, n);
                         }
-                    }catch (SocketTimeoutException ignored) {}
+                    } catch (SocketTimeoutException ignored) {
+                    }
                     signal = baos.toString(StandardCharsets.UTF_8);
                     baos.close();
                     socket.getOutputStream()
@@ -69,7 +70,9 @@ public class SignalServer {
                     }
                 }
             }
-        }).start();
+        });
+        thread.setName("SignalServer");
+        thread.start();
     }
 
     public void stop() throws IOException {
