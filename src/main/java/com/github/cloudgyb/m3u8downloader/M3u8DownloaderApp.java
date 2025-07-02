@@ -20,7 +20,6 @@ import org.kordamp.bootstrapfx.BootstrapFX;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.BindException;
@@ -29,7 +28,6 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.LogManager;
 
 import static com.github.cloudgyb.m3u8downloader.viewcontroller.BootstrapStyle.*;
 
@@ -44,15 +42,6 @@ public class M3u8DownloaderApp extends Application {
     private static volatile Stage primaryStage;
     private static final int signalServerPort = 65530;
     private static SignalServer signalServer;
-
-    static {
-        final LogManager logManager = LogManager.getLogManager();
-        try {
-            logManager.readConfiguration(M3u8DownloaderApp.class.getResourceAsStream("/logging.properties"));
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
-        }
-    }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -92,22 +81,15 @@ public class M3u8DownloaderApp extends Application {
     }
 
     public static void main(String[] args) {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                if (signalServer != null) {
-                    signalServer.stop();
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }));
         try {
+            logger.info("启动信号处理服务...");
             signalServer = new SignalServer(signalServerPort);
             signalServer.signalHandler(new RepeatProcessStartupSignalHandler(), new HttpServerHandler())
                     .start();
+            logger.info("信号处理服务启动完成！");
         } catch (IOException e) {
             if (e instanceof BindException) {
-                System.err.println("信号处理端口已经占用，已经有进程启动，发送信号到已有进程...");
+                logger.error("信号处理端口已经占用，已经有进程启动，发送信号到已有进程...");
                 try (Socket socket = new Socket()) {
                     socket.connect(new InetSocketAddress(signalServerPort));
                     OutputStream outputStream = socket.getOutputStream();
@@ -116,23 +98,35 @@ public class M3u8DownloaderApp extends Application {
                     outputStream.flush();
                     outputStream.close();
                 } catch (IOException ex) {
-                    System.err.println("发送信号到已有进程发生异常：" + ex.getMessage());
+                    logger.error("发送信号到已有进程发生异常：{}", ex.getMessage());
                 }
                 System.exit(0);
             }
         }
+        logger.info("初始化数据库...");
         DatabaseInitializer.initDatabase();
+        logger.info("数据库初始化完成！");
+        logger.info("启动JavaFX...");
         launch(args);
     }
 
     @Override
     public void stop() {
-        System.out.println("stop not finish task....");
+        try {
+            if (signalServer != null) {
+                logger.info("停止信号处理服务...");
+                signalServer.stop();
+                logger.info("信号处理服务已停止！");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        logger.info("停止所有未完成的下载任务...");
         final List<DownloadTaskViewModel> noFinishedTasks = ApplicationStore.getNoFinishedTasks();
         for (DownloadTaskViewModel noFinishedTask : noFinishedTasks) {
             noFinishedTask.stop();
         }
-        System.out.println("Close application...");
+        logger.info("所有未完成下载任务已停止！退出...");
         System.exit(0);
     }
 
