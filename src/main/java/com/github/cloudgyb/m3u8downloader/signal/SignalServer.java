@@ -1,9 +1,14 @@
 package com.github.cloudgyb.m3u8downloader.signal;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +21,7 @@ import java.util.List;
  * </p>
  */
 public class SignalServer {
+    private static final Logger log = LoggerFactory.getLogger(SignalServer.class);
     private volatile Boolean isRunning = false;
     private final ServerSocket serverSocket;
     private final List<SignalHandler> handlers = new ArrayList<>();
@@ -38,14 +44,24 @@ public class SignalServer {
         }
         new Thread(() -> {
             while (isRunning) {
-                String signal;
+                String signal = "";
                 try (Socket socket = serverSocket.accept()) {
-                    socket.setSoTimeout(5000);
+                    socket.setSoTimeout(2000);
                     InputStream inputStream = socket.getInputStream();
-                    byte[] bytes = inputStream.readAllBytes();
-                    signal = new String(bytes, StandardCharsets.UTF_8);
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream(8123);
+                    byte[] buffer = new byte[128];
+                    int n;
+                    try {
+                        while ((n = inputStream.read(buffer)) != -1) {
+                            baos.write(buffer, 0, n);
+                        }
+                    }catch (SocketTimeoutException ignored) {}
+                    signal = baos.toString(StandardCharsets.UTF_8);
+                    baos.close();
+                    socket.getOutputStream()
+                            .write("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n".getBytes(StandardCharsets.UTF_8));
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    log.error(e.getMessage());
                 }
                 for (SignalHandler handler : handlers) {
                     if (handler.canHandle(signal)) {

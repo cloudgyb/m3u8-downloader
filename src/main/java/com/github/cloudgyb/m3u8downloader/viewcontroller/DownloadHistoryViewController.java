@@ -2,7 +2,6 @@ package com.github.cloudgyb.m3u8downloader.viewcontroller;
 
 import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
 import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
-import com.github.cloudgyb.m3u8downloader.util.SpringBeanUtil;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -10,6 +9,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
+import javafx.scene.text.TextAlignment;
 import javafx.util.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,9 +25,11 @@ import java.util.List;
  */
 public class DownloadHistoryViewController {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final DownloadTaskService downloadTaskService = SpringBeanUtil.getBean(DownloadTaskService.class);
+    private final DownloadTaskService downloadTaskService = DownloadTaskService.getInstance();
     @FXML
     private TableView<DownloadTaskEntity> downloadHistoryTable;
+    @FXML
+    public TableColumn<DownloadTaskEntity, Object> checkColumn;
     @FXML
     private TableColumn<DownloadTaskEntity, Object> idColumn;
     @FXML
@@ -76,6 +78,21 @@ public class DownloadHistoryViewController {
         downloadHistoryTable.setRowFactory(rowFactory);
         downloadHistoryTable.getSortOrder().add(finishTimeColumn);
         // 绑定属性
+        checkColumn.setCellFactory(v -> new TableCell<>() {
+            private final CheckBox checkBox = new CheckBox();
+            {
+                checkBox.setAlignment(Pos.CENTER);
+                checkBox.setTextAlignment(TextAlignment.CENTER);
+            }
+            @Override
+            protected void updateItem(Object o, boolean b) {
+                if (b) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(checkBox);
+                }
+            }
+        });
         idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
         urlColumn.setCellFactory(cellFactory);
         urlColumn.setCellValueFactory(new PropertyValueFactory<>("url"));

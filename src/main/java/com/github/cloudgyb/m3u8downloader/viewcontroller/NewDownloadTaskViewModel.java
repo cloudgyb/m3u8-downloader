@@ -6,7 +6,6 @@ import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
 import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
 import com.github.cloudgyb.m3u8downloader.download.TaskDownloadThreadManager;
 import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
-import com.github.cloudgyb.m3u8downloader.util.SpringBeanUtil;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -33,7 +32,7 @@ public class NewDownloadTaskViewModel {
      * 保存的文件名
      */
     private final StringProperty filename = new SimpleStringProperty();
-    private final DownloadTaskService downloadTaskService = SpringBeanUtil.getBean(DownloadTaskService.class);
+    private final DownloadTaskService downloadTaskService = DownloadTaskService.getInstance();
 
     public String getUrl() {
         return url.get();

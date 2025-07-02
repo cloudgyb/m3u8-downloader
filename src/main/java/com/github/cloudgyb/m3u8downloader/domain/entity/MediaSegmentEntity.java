@@ -1,17 +1,16 @@
 package com.github.cloudgyb.m3u8downloader.domain.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 
 /**
+ * 媒体分片信息存储实体类
+ *
  * @author geng
  * @since 2023/03/16 21:59:08
  */
-@TableName("media_segment")
+//@TableName("media_segment")
 @SuppressWarnings("unused")
 public class MediaSegmentEntity {
-    @TableId(type = IdType.AUTO)
+    //@TableId(type = IdType.AUTO)
     private Integer id;
     private Integer taskId;
     private String url;

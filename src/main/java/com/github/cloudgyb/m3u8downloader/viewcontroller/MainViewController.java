@@ -7,6 +7,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 
 import java.io.IOException;
@@ -59,10 +60,10 @@ public class MainViewController {
         if (selected) {
             FXMLLoader loader = new FXMLLoader(MainViewController.
                     class.getResource("/fxml/download_history.fxml"));
-            final StackPane pane = loader.load();
+            final Region pane = loader.load();
             final DownloadHistoryViewController controller = loader.getController();
             controller.init();
-            pane.setAlignment(Pos.CENTER);
+            //pane.setAlignment(Pos.CENTER);
             tab.setContent(pane);
         }
     }

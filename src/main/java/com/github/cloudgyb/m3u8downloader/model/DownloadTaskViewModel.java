@@ -8,7 +8,6 @@ import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
 import com.github.cloudgyb.m3u8downloader.download.TaskDownloadThreadManager;
 import com.github.cloudgyb.m3u8downloader.event.*;
 import com.github.cloudgyb.m3u8downloader.util.DateFormatter;
-import com.github.cloudgyb.m3u8downloader.util.SpringBeanUtil;
 import javafx.beans.property.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +30,7 @@ public class DownloadTaskViewModel implements EventAware {
     private final ObjectProperty<ProgressAndStatus> progressAndStatus = new SimpleObjectProperty<>();
     private final DownloadTaskEntity taskDomain;
     private final TaskDownloadThreadManager taskDownloadThreadManager = TaskDownloadThreadManager.getInstance();
-    private final DownloadTaskService downloadTaskService = SpringBeanUtil.getBean(DownloadTaskService.class);
+    private final DownloadTaskService downloadTaskService = DownloadTaskService.getInstance();
 
     /**
      * 构造一个下载任务视图模型

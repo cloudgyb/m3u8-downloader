@@ -1,8 +1,8 @@
 package com.github.cloudgyb.m3u8downloader.viewcontroller;
 
 import com.github.cloudgyb.m3u8downloader.ApplicationStore;
-import com.github.cloudgyb.m3u8downloader.domain.SystemConfig;
-import com.github.cloudgyb.m3u8downloader.domain.SystemConfigDao;
+import com.github.cloudgyb.m3u8downloader.domain.entity.SystemConfig;
+import com.github.cloudgyb.m3u8downloader.domain.dao.SystemConfigDao;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Hyperlink;
