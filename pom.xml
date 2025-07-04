@@ -84,6 +84,15 @@
                     <launcher>launcher</launcher>
                     <mainClass>m3u8downloader/com.github.cloudgyb.m3u8downloader.M3u8DownloaderApp</mainClass>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>jlink</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jlink</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

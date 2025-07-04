@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 配置文件每隔1分钟，就检查更新 -->
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+    <!-- 定义参数常量，便于后面直接用${name}来获取value值 -->
+    <property name="log.pattern"
+              value="%highlight(%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n){TRACE=CYAN, DEBUG=GREEN, INFO=BLUE, WARN=YELLOW, ERROR=RED}"/>
+    <property name="log.filePath" value="logs/"/>
+    <property name="log.maxHistory" value="7"/>
+
+    <!-- ch.qos.logback.core.ConsoleAppender 控制台输出 -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- 过去使用layout，现在都推荐使用encoder
+             作用一：将日志信息转换（格式化）为字符串
+             作用二：然后写入到文件中-->
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+            <charset>utf-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ch.qos.logback.core.rolling.RollingFileAppender 文件日志输出到文件 -->
+    <!-- 1.打印debug级别日志的设置 -->
+    <appender name="debugAppender"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 例如当天，也就是今天是2020-2-10，那么在这天生成的日志文件路径为${log.filePath}/debug.log
+             接着到了明天，也就是2019-2-11，这天生成的日志文件路径为${log.filePath}/debug.log，
+             但昨天2020-2-10，生成的日志文件路径就变为${log.filePath}/debug/debug-2020-2-10.log.gz(压缩文件) -->
+
+        <!-- 当天生成的日志文件的路径 -->
+        <file>${log.filePath}/debug.log</file>
+        <!-- 设置基于时间(每天)的滚动策略，也就是将日志内容按照日期来写入到相应的文件中-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 当天之前的每天生成的日志文件的路径 -->
+            <fileNamePattern>${log.filePath}/debug/debug-%d{yyyy-MM-dd}.log.gz
+            </fileNamePattern>
+            <!-- 最大历史保存文件的数量，只保存最近${log.maxHistory}天的日志文件，超出的会被删除-->
+            <maxHistory>${log.maxHistory}</maxHistory>
+        </rollingPolicy>
+        <!-- 过去使用layout，现在都推荐使用encoder
+             作用一：将日志信息转换（格式化）为字符串
+             作用二：然后写入到文件中-->
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+        </encoder>
+        <!-- 过滤掉非debug级别的信息 -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>debug</level>
+            <onMatch>ACCEPT</onMatch>
+            <!-- 作用是拒绝写入所有与<level>不匹配的日志信息，
+            也就是非debug级别的日志信息都不会被写入到日志文件中 -->
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- 2.打印info级别日志的设置 -->
+    <appender name="infoAppender"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+        <!-- 当天生成的日志文件的路径 -->
+        <file>${log.filePath}/info.log</file>
+        <!-- 设置基于时间(每天)的滚动策略，也就是将日志内容按照日期来写入到相应的文件中-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 当天之前的每天生成的日志文件的路径 -->
+            <fileNamePattern>${log.filePath}/info/info-%d{yyyy-MM-dd}.log.gz
+            </fileNamePattern>
+            <!-- 最大历史保存文件的数量，只保存最近30天的日志文件，超出的会被删除-->
+            <maxHistory>${log.maxHistory}</maxHistory>
+        </rollingPolicy>
+        <!-- 过去使用layout，现在都推荐使用encoder
+             作用一：将日志信息转换（格式化）为字符串
+             作用二：然后写入到文件中-->
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+        </encoder>
+        <!-- 过滤掉非info级别的信息 -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>info</level>
+            <onMatch>ACCEPT</onMatch>
+            <!-- 作用是拒绝写入所有与<level>不匹配的日志信息，
+            也就是非info级别的日志信息都不会被写入到日志文件中 -->
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- 3.打印error级别日志的设置 -->
+    <appender name="errorAppender"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+        <!-- 当天生成的日志文件的路径 -->
+        <file>${log.filePath}/error.log</file>
+        <!-- 设置基于时间(每天)的滚动策略，也就是将日志内容按照日期来写入到相应的文件中-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 当天之前的每天生成的日志文件的路径 -->
+            <fileNamePattern>${log.filePath}/error/error-%d{yyyy-MM-dd}.log.gz
+            </fileNamePattern>
+            <!-- 最大历史保存文件的数量，只保存最近30天的日志文件，超出的会被删除-->
+            <maxHistory>${log.maxHistory}</maxHistory>
+        </rollingPolicy>
+        <!-- 过去使用layout，现在都推荐使用encoder
+             作用一：将日志信息转换（格式化）为字符串
+             作用二：然后写入到文件中-->
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+        </encoder>
+        <!-- 过滤掉非error级别的信息 -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>error</level>
+            <onMatch>ACCEPT</onMatch>
+            <!-- 作用是拒绝写入所有与<level>不匹配的日志信息，
+            也就是非error级别的日志信息都不会被写入到日志文件中 -->
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- 也是一种<logger>,是所有<logger>的父级 -->
+    <!-- 不设置additivity属性，或者设置additivity = true的<logger>,会继承root的子标签<appender-ref ref="console" />的设置，
+        将它自己设置的level属性级别及以上的日志打印到控制台 -->
+    <root level="info">
+        <!-- 表示按照console的设置去输出日志到控制台 -->
+        <appender-ref ref="console"/>
+        <appender-ref ref="debugAppender"/>
+        <appender-ref ref="infoAppender"/>
+        <appender-ref ref="errorAppender"/>
+    </root>
+
+
+    <!-- 监听com.wj.log包下所有类产生的日志信息
+    不设置additivity属性，那么默认additivity = true,表示会继承父级（在这里它的父级只有root一个），
+    也就是会将日志信息也输出在控制台，但级别会覆盖父级的级别，也就是在控制台会输出debug级别及以上的日志信息 -->
+    <!--<logger name="com.wj.log" level="debug">
+        &lt;!&ndash; 表示按照debugAppender的设置去打印日志 &ndash;&gt;
+        <appender-ref ref="debugAppender"/>
+        &lt;!&ndash; 表示按照infoAppender的设置去打印日志 &ndash;&gt;
+        <appender-ref ref="infoAppender"/>
+        &lt;!&ndash; 表示按照errorAppender的设置去打印日志 &ndash;&gt;
+        <appender-ref ref="errorAppender"/>
+    </logger>-->
+
+</configuration>
