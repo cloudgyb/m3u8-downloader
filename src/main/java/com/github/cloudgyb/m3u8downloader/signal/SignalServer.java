@@ -64,10 +64,14 @@ public class SignalServer {
                 } catch (IOException e) {
                     log.error(e.getMessage());
                 }
-                for (SignalHandler handler : handlers) {
-                    if (handler.canHandle(signal)) {
-                        handler.handle(signal);
+                try {
+                    for (SignalHandler handler : handlers) {
+                        if (handler.canHandle(signal)) {
+                            handler.handle(signal);
+                        }
                     }
+                } catch (Exception e) {
+                    log.error("信号处理器处理异常", e);
                 }
             }
         });
