@@ -80,7 +80,7 @@
                     <noHeaderFiles>true</noHeaderFiles>
                     <noManPages>true</noManPages>
                     <jlinkZipName>${project.artifactId}</jlinkZipName>
-                    <jlinkImageName>m3u8downloader</jlinkImageName>
+                    <jlinkImageName>${project.artifactId}</jlinkImageName>
                     <launcher>launcher</launcher>
                     <mainClass>m3u8downloader/com.github.cloudgyb.m3u8downloader.M3u8DownloaderApp</mainClass>
                 </configuration>
