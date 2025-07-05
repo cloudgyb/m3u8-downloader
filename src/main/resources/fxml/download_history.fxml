@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<StackPane xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1"
+<StackPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.DownloadHistoryViewController">
     <ToolBar nodeOrientation="RIGHT_TO_LEFT" StackPane.alignment="TOP_RIGHT">
         <Button id="deleteAll" defaultButton="true" disable="true" mnemonicParsing="false"

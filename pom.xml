@@ -58,6 +58,11 @@
             <artifactId>logback-classic</artifactId>
             <version>1.5.18</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.19.1</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -80,7 +85,7 @@
                     <noHeaderFiles>true</noHeaderFiles>
                     <noManPages>true</noManPages>
                     <jlinkZipName>${project.artifactId}</jlinkZipName>
-                    <jlinkImageName>m3u8downloader</jlinkImageName>
+                    <jlinkImageName>${project.artifactId}</jlinkImageName>
                     <launcher>launcher</launcher>
                     <mainClass>m3u8downloader/com.github.cloudgyb.m3u8downloader.M3u8DownloaderApp</mainClass>
                 </configuration>
