@@ -87,7 +87,9 @@ public class NewDownloadTaskViewModel {
             maxThread = ApplicationStore.getSystemConfig().getDefaultThreadCount();
         }
         domain.setMaxThreadCount(maxThread);
-        domain.setSaveFilename(getFilename());
+        String inputFilename = getFilename();
+        String saveFileName = inputFilename == null || inputFilename.isBlank() ? domain.getId() + "" : inputFilename;
+        domain.setSaveFilename(saveFileName);
         domain.setStage(DownloadTaskStageEnum.NEW.name());
         domain.setStatus(DownloadTaskStageEnum.NEW.name());
         return domain;

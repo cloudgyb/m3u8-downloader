@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 public class DownloadTaskViewModel implements EventAware {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final IntegerProperty id = new SimpleIntegerProperty();
+    private final StringProperty saveFilename = new SimpleStringProperty();
     private final StringProperty url = new SimpleStringProperty();
     private final StringProperty createTime = new SimpleStringProperty();
     private final StringProperty rate = new SimpleStringProperty();
@@ -46,6 +47,10 @@ public class DownloadTaskViewModel implements EventAware {
     //视图模型初始化
     private void init() {
         this.id.set(this.taskDomain.getId());
+        String saveFilename = this.taskDomain.getSaveFilename();
+        saveFilename = saveFilename == null || saveFilename.isBlank() ?
+                taskDomain.getId() + "" : this.taskDomain.getSaveFilename();
+        this.saveFilename.set(saveFilename);
         this.url.set(this.taskDomain.getUrl());
         this.createTime.set(DateFormatter.format(this.taskDomain.getCreateTime()));
         String statusText = this.taskDomain.getStage();
@@ -110,6 +115,10 @@ public class DownloadTaskViewModel implements EventAware {
 
     public IntegerProperty idProperty() {
         return id;
+    }
+
+    public StringProperty saveFilenameProperty() {
+        return saveFilename;
     }
 
     public StringProperty urlProperty() {

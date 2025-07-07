@@ -28,6 +28,8 @@ public class DownloadListViewController {
     @FXML
     private TableColumn<DownloadTaskViewModel, Integer> idColumn;
     @FXML
+    public TableColumn<DownloadTaskViewModel, String> saveFilenameColumn;
+    @FXML
     private TableColumn<DownloadTaskViewModel, String> createTimeColumn;
     @FXML
     private TableColumn<DownloadTaskViewModel, String> urlColumn;
@@ -49,6 +51,7 @@ public class DownloadListViewController {
 
         // 设置模型属性关联
         idColumn.setCellValueFactory((new PropertyValueFactory<>("id")));
+        saveFilenameColumn.setCellValueFactory(new PropertyValueFactory<>("saveFilename"));
         createTimeColumn.setCellValueFactory(new PropertyValueFactory<>("createTime"));
         urlColumn.setCellValueFactory(new PropertyValueFactory<>("url"));
         progressColumn.setCellFactory(cell -> {

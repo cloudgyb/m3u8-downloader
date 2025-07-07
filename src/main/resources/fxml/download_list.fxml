@@ -8,6 +8,7 @@
     <TableView fx:id="downloadTable">
         <columns>
             <TableColumn fx:id="idColumn" sortType="DESCENDING" text="ID" style="-fx-alignment: center"/>
+            <TableColumn fx:id="saveFilenameColumn" text="保存文件名" style="-fx-alignment: center"/>
             <TableColumn fx:id="createTimeColumn" text="创建时间" sortType="DESCENDING" style="-fx-alignment: center"/>
             <TableColumn fx:id="urlColumn" text="URL" style="-fx-alignment: center"/>
             <TableColumn fx:id="progressColumn" text="进度" style="-fx-alignment: center"/>
