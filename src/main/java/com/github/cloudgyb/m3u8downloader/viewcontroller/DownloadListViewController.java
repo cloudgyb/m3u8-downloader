@@ -9,6 +9,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 
@@ -27,6 +28,8 @@ public class DownloadListViewController {
     private TableView<DownloadTaskViewModel> downloadTable;
     @FXML
     private TableColumn<DownloadTaskViewModel, Integer> idColumn;
+    @FXML
+    public TableColumn<DownloadTaskViewModel, String> saveFilenameColumn;
     @FXML
     private TableColumn<DownloadTaskViewModel, String> createTimeColumn;
     @FXML
@@ -49,6 +52,13 @@ public class DownloadListViewController {
 
         // 设置模型属性关联
         idColumn.setCellValueFactory((new PropertyValueFactory<>("id")));
+        saveFilenameColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        saveFilenameColumn.setCellValueFactory(new PropertyValueFactory<>("saveFilename"));
+        saveFilenameColumn.setOnEditCommit(event -> {
+            DownloadTaskViewModel viewModel = event.getRowValue();
+            String newSaveFilename = event.getNewValue();
+            viewModel.updateSaveFileName(newSaveFilename);
+        });
         createTimeColumn.setCellValueFactory(new PropertyValueFactory<>("createTime"));
         urlColumn.setCellValueFactory(new PropertyValueFactory<>("url"));
         progressColumn.setCellFactory(cell -> {

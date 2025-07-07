@@ -61,4 +61,11 @@ public class DownloadTaskService {
     public void updateById(DownloadTaskEntity task) {
         int i = downloadTaskDao.updateById(task);
     }
+
+    public void updateSaveFilename(Integer id, String newSaveFilename) {
+        int i = downloadTaskDao.updateSaveFilenameById(id, newSaveFilename);
+        if (i != 1) {
+            log.error("更新任务保存文件名失败：id:{}", id);
+        }
+    }
 }
