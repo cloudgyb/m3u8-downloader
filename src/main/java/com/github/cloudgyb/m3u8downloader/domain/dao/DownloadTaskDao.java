@@ -98,6 +98,27 @@ public class DownloadTaskDao implements IDao<DownloadTaskEntity, Integer> {
         }
     }
 
+    private final static String updateSaveFilenameByIdSQL = "update task set " +
+            "save_filename = ? " +
+            "where id = ?;";
+
+    public int updateSaveFilenameById(Integer id, String newSaveFilename) {
+        try (Connection connection = DBUtil.getConnection()) {
+            try (PreparedStatement ps = connection.prepareStatement(updateSaveFilenameByIdSQL)) {
+                ps.setString(1, newSaveFilename);
+                ps.setInt(2, id);
+                int i = ps.executeUpdate();
+                connection.commit();
+                return i;
+            } catch (SQLException e) {
+                connection.rollback();
+                throw new RuntimeException(e);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private final static String deleteSQL = "delete from task where id = ?;";
 
     @Override

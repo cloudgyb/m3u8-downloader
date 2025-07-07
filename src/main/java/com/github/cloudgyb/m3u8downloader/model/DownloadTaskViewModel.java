@@ -178,4 +178,8 @@ public class DownloadTaskViewModel implements EventAware {
             this.rate.set(rateHumanReadable);
         }
     }
+
+    public void updateSaveFileName(String newSaveFilename) {
+        downloadTaskService.updateSaveFilename(this.taskDomain.getId(), newSaveFilename);
+    }
 }

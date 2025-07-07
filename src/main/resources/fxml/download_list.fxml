@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.StackPane?>
 <StackPane fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.DownloadListViewController"
            xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8">
-    <TableView fx:id="downloadTable">
+    <TableView fx:id="downloadTable" editable="true">
         <columns>
             <TableColumn fx:id="idColumn" sortType="DESCENDING" text="ID" style="-fx-alignment: center"/>
             <TableColumn fx:id="saveFilenameColumn" text="保存文件名" style="-fx-alignment: center"/>
