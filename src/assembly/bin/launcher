@@ -1,0 +1,5 @@
+#!/bin/sh
+JLINK_VM_OPTIONS=
+export GDK_BACKEND=x11
+DIR=`dirname $0`
+$DIR/javaw $JLINK_VM_OPTIONS -m m3u8downloader/com.github.cloudgyb.m3u8downloader.M3u8DownloaderApp "$@"
