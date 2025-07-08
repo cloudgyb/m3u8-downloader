@@ -13,12 +13,23 @@
             <directory>${project.build.directory}/${project.artifactId}</directory>
             <outputDirectory>/</outputDirectory>
             <excludes>
-                <exclude>${project.build.directory}/${project.artifactId}/bin/launcher*</exclude>
+                <exclude>bin/launcher*</exclude>
             </excludes>
         </fileSet>
         <fileSet>
             <directory>src/assembly/bin/</directory>
             <outputDirectory>/bin/</outputDirectory>
+            <fileMode>755</fileMode>
+            <includes>
+                <include>*</include>  <!-- 包含所有文件 -->
+            </includes>
+            <!-- 强制覆盖已存在文件 -->
+            <filtered>true</filtered>
+            <useDefaultExcludes>true</useDefaultExcludes>
+        </fileSet>
+        <fileSet>
+            <directory>src/assembly/conf/</directory>
+            <outputDirectory>/conf/</outputDirectory>
             <fileMode>755</fileMode>
             <includes>
                 <include>*</include>  <!-- 包含所有文件 -->
