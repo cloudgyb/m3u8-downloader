@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 配置文件每隔1分钟，就检查更新 -->
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+    <!-- 定义参数常量，便于后面直接用${name}来获取value值 -->
+    <property name="log.pattern"
+              value="%highlight(%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n){TRACE=CYAN, DEBUG=GREEN, INFO=BLUE, WARN=YELLOW, ERROR=RED}"/>
+    <property name="log.filePath" value="logs/"/>
+    <property name="log.maxHistory" value="7"/>
+
+    <!-- ch.qos.logback.core.ConsoleAppender 控制台输出 -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- 过去使用layout，现在都推荐使用encoder
+             作用一：将日志信息转换（格式化）为字符串
+             作用二：然后写入到文件中-->
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+            <charset>utf-8</charset>
+        </encoder>
+    </appender>
+    <!-- 也是一种<logger>,是所有<logger>的父级 -->
+    <!-- 不设置additivity属性，或者设置additivity = true的<logger>,会继承root的子标签<appender-ref ref="console" />的设置，
+        将它自己设置的level属性级别及以上的日志打印到控制台 -->
+    <root level="debug">
+        <!-- 表示按照console的设置去输出日志到控制台 -->
+        <appender-ref ref="console"/>
+    </root>
+</configuration>
