@@ -5,20 +5,22 @@
     <id>release-${project.version}</id>
     <formats>
         <format>dir</format>
+        <format>zip</format>
+        <format>tar.gz</format>
     </formats>
     <includeBaseDirectory>false</includeBaseDirectory>
 
     <fileSets>
         <fileSet>
             <directory>${project.build.directory}/${project.artifactId}</directory>
-            <outputDirectory>/</outputDirectory>
+            <outputDirectory>${project.artifactId}/</outputDirectory>
             <excludes>
                 <exclude>bin/launcher*</exclude>
             </excludes>
         </fileSet>
         <fileSet>
             <directory>src/assembly/bin/</directory>
-            <outputDirectory>/bin/</outputDirectory>
+            <outputDirectory>${project.artifactId}/bin/</outputDirectory>
             <fileMode>755</fileMode>
             <includes>
                 <include>*</include>  <!-- 包含所有文件 -->
@@ -29,7 +31,7 @@
         </fileSet>
         <fileSet>
             <directory>src/assembly/conf/</directory>
-            <outputDirectory>/conf/</outputDirectory>
+            <outputDirectory>${project.artifactId}/conf/</outputDirectory>
             <fileMode>755</fileMode>
             <includes>
                 <include>*</include>  <!-- 包含所有文件 -->

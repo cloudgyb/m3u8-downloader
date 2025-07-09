@@ -75,6 +75,9 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
+                    <options>
+                        <option>-Dlogback.configurationFile=../conf/logback.xml</option>
+                    </options>
                     <stripDebug>true</stripDebug>
                     <compress>2</compress>
                     <noHeaderFiles>true</noHeaderFiles>

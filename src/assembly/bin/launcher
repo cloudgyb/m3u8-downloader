@@ -1,6 +1,6 @@
 #!/bin/sh
-JLINK_VM_OPTIONS=
+JLINK_VM_OPTIONS="-Dlogback.configurationFile=../conf/logback.xml"
 export GDK_BACKEND=x11
-DIR=`dirname $0`
-VM_OPTIONS=-Dlogback.configurationFile="$DIR"/../conf/logback.xml
-$DIR/javaw $VM_OPTIONS $JLINK_VM_OPTIONS -m m3u8downloader/com.github.cloudgyb.m3u8downloader.M3u8DownloaderApp "$@"
+DIR=$(dirname "$0")
+nohup "$DIR"/javaw "$JLINK_VM_OPTIONS" \
+    -m m3u8downloader/com.github.cloudgyb.m3u8downloader.M3u8DownloaderApp "$@" > /dev/null 2>&1
