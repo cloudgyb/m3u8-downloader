@@ -1,5 +1,6 @@
 package com.github.cloudgyb.m3u8downloader.conf;
 
+import java.io.File;
 import java.util.Properties;
 
 /**
@@ -21,15 +22,23 @@ public class ApplicationConfig {
         if (instance == null) {
             synchronized (ApplicationConfig.class) {
                 if (instance == null) {
-                    Properties properties = new Properties();
-                    try {
-                        properties.load(ApplicationConfig.class.getClassLoader()
-                                .getResourceAsStream("application.properties"));
-                    } catch (Exception e) {
-                        throw new RuntimeException("未找到 application.properties 文件！");
+                    File ffmpegEXE = new File("./ffmpeg.exe");
+                    File ffmpeg = new File("./ffmpeg");
+                    if (ffmpegEXE.exists()) { // windows 环境
+                        instance = new ApplicationConfig(ffmpegEXE.getPath());
+                    } else if (ffmpeg.exists()) { // linux 环境
+                        instance = new ApplicationConfig(ffmpeg.getPath());
+                    } else { // development environment
+                        Properties properties = new Properties();
+                        try {
+                            properties.load(ApplicationConfig.class.getClassLoader()
+                                    .getResourceAsStream("application.properties"));
+                        } catch (Exception e) {
+                            throw new RuntimeException("未找到 application.properties 文件！");
+                        }
+                        String ffmpegBinFilePath = properties.getProperty("application.config.ffmpeg-bin-file-path");
+                        instance = new ApplicationConfig(ffmpegBinFilePath);
                     }
-                    String ffmpegBinFilePath = properties.getProperty("application.config.ffmpeg-bin-file-path");
-                    instance = new ApplicationConfig(ffmpegBinFilePath);
                 }
             }
         }

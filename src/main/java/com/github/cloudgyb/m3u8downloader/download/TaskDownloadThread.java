@@ -272,7 +272,7 @@ public class TaskDownloadThread extends Thread {
     private void m3u8IndexParse() {
         int tid = task.getId();
         String url = task.getUrl();
-        logger.info("开始解析任务对应的 m3u8 url{}-tid:{}", url, tid);
+        logger.info("开始解析任务对应的 m3u8 url: {}-tid:{}", url, tid);
         task.setStage(DownloadTaskStageEnum.M3U8_PARSING.name());
         task.setStatus(DownloadTaskStatusEnum.RUNNING.name());
         downloadTaskService.updateById(task);
@@ -295,7 +295,7 @@ public class TaskDownloadThread extends Thread {
             task.setStage(DownloadTaskStageEnum.M3U8_PARSE_FAILED.name());
             task.setStatus(DownloadTaskStatusEnum.STOPPED_ERROR.name());
             publishStatus(DownloadTaskStatusEnum.STOPPED_ERROR, null, DownloadTaskStageEnum.M3U8_PARSE_FAILED);
-            logger.error("解析任务对应的 m3u8 url{}-tid:{} 失败！", url, tid);
+            logger.error("解析任务对应的 m3u8 url: {}-tid:{} 失败！", url, tid, e);
         }
         downloadTaskService.updateById(task);
     }
