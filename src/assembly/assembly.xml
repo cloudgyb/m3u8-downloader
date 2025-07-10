@@ -25,6 +25,9 @@
             <includes>
                 <include>*</include>  <!-- 包含所有文件 -->
             </includes>
+            <excludes>
+                <exclude>ffmpeg*.zip</exclude>
+            </excludes>
             <!-- 强制覆盖已存在文件 -->
             <filtered>true</filtered>
             <useDefaultExcludes>true</useDefaultExcludes>
