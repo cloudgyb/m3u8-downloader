@@ -4,6 +4,11 @@ module m3u8downloader {
     requires javafx.media;
     requires java.sql;
     requires java.net.http;
+    requires java.security.jgss;
+    requires jdk.crypto.ec;
+    requires jdk.crypto.cryptoki;
+    requires jdk.security.auth;
+    requires jdk.httpserver;
     requires org.kordamp.bootstrapfx.core;
     requires org.xerial.sqlitejdbc;
     requires org.slf4j;
