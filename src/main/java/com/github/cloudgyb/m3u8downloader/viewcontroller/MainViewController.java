@@ -1,16 +1,12 @@
 package com.github.cloudgyb.m3u8downloader.viewcontroller;
 
 import com.github.cloudgyb.m3u8downloader.ApplicationContext;
+import javafx.event.Event;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.geometry.Pos;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-
-import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 主页面视图控制器
@@ -19,65 +15,28 @@ import java.io.IOException;
  * 2021/5/16 10:47
  */
 public class MainViewController {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     @FXML
     private TabPane tabPane;
+    @FXML
+    public Tab newTaskTab;
+    @FXML
+    public Tab downloadingTab;
+    @FXML
+    public Tab downloadHistoryTab;
+    @FXML
+    public Tab settingTab;
 
-    public void init() {
+    public void initialize() {
         ApplicationContext.getInstance().set("tabs", tabPane);
-    }
-
-    public void newDownloadTaskTabSelected() throws IOException {
-        final Tab tab = tabPane.getSelectionModel().getSelectedItem();
-        final boolean selected = tab.isSelected();
-        if (selected) {
-            FXMLLoader loader = new FXMLLoader(MainViewController.
-                    class.getResource("/fxml/new_download_task.fxml"));
-            final Pane pane = loader.load();
-            final NewDownloadTaskViewController controller = loader.getController();
-            controller.init();
-            tab.setContent(pane);
-        }
-    }
-
-
-    public void downloadListTabSelected() throws IOException {
-        final Tab tab = tabPane.getSelectionModel().getSelectedItem();
-        final boolean selected = tab.isSelected();
-        if (selected) {
-            FXMLLoader loader = new FXMLLoader(MainViewController.
-                    class.getResource("/fxml/download_list.fxml"));
-            final StackPane pane = loader.load();
-            final DownloadListViewController controller = loader.getController();
-            controller.init();
-            pane.setAlignment(Pos.CENTER);
-            tab.setContent(pane);
-        }
-    }
-
-    public void downloadHistoryTabSelected() throws IOException {
-        final Tab tab = tabPane.getSelectionModel().getSelectedItem();
-        final boolean selected = tab.isSelected();
-        if (selected) {
-            FXMLLoader loader = new FXMLLoader(MainViewController.
-                    class.getResource("/fxml/download_history.fxml"));
-            final Region pane = loader.load();
-            final DownloadHistoryViewController controller = loader.getController();
-            controller.init();
-            //pane.setAlignment(Pos.CENTER);
-            tab.setContent(pane);
-        }
-    }
-
-    public void downloadSettingTabSelected() throws IOException {
-        final Tab tab = tabPane.getSelectionModel().getSelectedItem();
-        final boolean selected = tab.isSelected();
-        if (selected) {
-            FXMLLoader loader = new FXMLLoader(MainViewController.
-                    class.getResource("/fxml/setting.fxml"));
-            final Pane pane = loader.load();
-            final DownloadSettingViewController controller = loader.getController();
-            controller.init();
-            tab.setContent(pane);
-        }
+        tabPane.getSelectionModel().selectedItemProperty().addListener(
+                (obs, oldTab, newTab) -> {
+                    if (newTab != null) {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("切换到: {}", newTab.getText());
+                        }
+                        Event.fireEvent(newTab.getContent(), new Event(Tab.SELECTION_CHANGED_EVENT));
+                    }
+                });
     }
 }

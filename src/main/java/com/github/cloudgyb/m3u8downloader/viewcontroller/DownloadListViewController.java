@@ -12,6 +12,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -22,8 +24,11 @@ import java.util.List;
  * 2021/5/16 18:32
  */
 public class DownloadListViewController {
+    private static final Logger logger = LoggerFactory.getLogger(DownloadListViewController.class);
     private final static String switchBtnStyle = BootstrapStyle.btnXsStyle;
     private final static String deleteBtnStyle = BootstrapStyle.btnDangerStyle + BootstrapStyle.btnXsStyle;
+    @FXML
+    public StackPane stackPane;
     @FXML
     private TableView<DownloadTaskViewModel> downloadTable;
     @FXML
@@ -41,7 +46,7 @@ public class DownloadListViewController {
     @FXML
     private TableColumn<DownloadTaskViewModel, ProgressAndStatus> operaColumn;
 
-    public void init() {
+    public void initialize() {
         // 设置 table 行样式
         downloadTable.setRowFactory(p -> {
             final TableRow<DownloadTaskViewModel> objectTableRow = new TableRow<>();
@@ -71,7 +76,21 @@ public class DownloadListViewController {
         operaColumn.setCellFactory(cell -> new OperateColumnTableCell());
         operaColumn.setCellValueFactory(new PropertyValueFactory<>("progressAndStatus"));
 
+        stackPane.addEventHandler(Tab.SELECTION_CHANGED_EVENT, event -> {
+            if (event.getTarget() == stackPane) {
+                event.consume();
+                if (logger.isDebugEnabled()) {
+                    logger.debug("切换到: {}", downloadTable.getId());
+                }
+                refreshData();
+            }
+        });
         // 添加数据到 table
+        refreshData();
+    }
+
+    private void refreshData() {
+        downloadTable.getItems().clear();
         List<DownloadTaskViewModel> notFinishTasks = ApplicationStore.getNoFinishedTasks();
         downloadTable.getItems().addAll(notFinishTasks);
         downloadTable.sort();

@@ -5,14 +5,16 @@
 <?import javafx.scene.layout.*?>
 
 <StackPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.DownloadHistoryViewController">
+           fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.DownloadHistoryViewController"
+           fx:id="stackPane">
     <ToolBar nodeOrientation="RIGHT_TO_LEFT" StackPane.alignment="TOP_RIGHT">
         <Button id="deleteAll" defaultButton="true" disable="true" mnemonicParsing="false"
                 style="-fx-start-margin: 0;-fx-end-margin: 0" text="删除选择" textFill="#c73535"/>
     </ToolBar>
     <TableView fx:id="downloadHistoryTable" StackPane.alignment="CENTER">
         <columns>
-            <TableColumn fx:id="checkColumn" style="-fx-alignment: center" prefWidth="40.0" resizable="false" sortable="false">
+            <TableColumn fx:id="checkColumn" style="-fx-alignment: center" prefWidth="40.0" resizable="false"
+                         sortable="false">
                 <graphic>
                     <CheckBox mnemonicParsing="false"/>
                 </graphic>

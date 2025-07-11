@@ -5,7 +5,6 @@ import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
 import com.github.cloudgyb.m3u8downloader.signal.HttpServerHandler;
 import com.github.cloudgyb.m3u8downloader.signal.RepeatProcessStartupSignalHandler;
 import com.github.cloudgyb.m3u8downloader.signal.SignalServer;
-import com.github.cloudgyb.m3u8downloader.viewcontroller.MainViewController;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -48,8 +47,6 @@ public class M3u8DownloaderApp extends Application {
         M3u8DownloaderApp.primaryStage = primaryStage;
         final FXMLLoader loader = new FXMLLoader(M3u8DownloaderApp.class.getResource("/fxml/main.fxml"));
         final TabPane pane = loader.load();
-        final MainViewController controller = loader.getController();
-        controller.init();
         primaryStage.setScene(new Scene(pane));
         primaryStage.show();
         primaryStage.getIcons().add(new Image("/icon.png"));

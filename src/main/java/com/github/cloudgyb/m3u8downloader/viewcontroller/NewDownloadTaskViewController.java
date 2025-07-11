@@ -7,6 +7,8 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.Optional;
@@ -18,6 +20,9 @@ import java.util.Optional;
  * 2021/5/16 18:15
  */
 public class NewDownloadTaskViewController {
+    private static final Logger logger = LoggerFactory.getLogger(NewDownloadTaskViewController.class);
+    @FXML
+    public VBox vBox;
     @FXML
     private TextField urlTextField;
     @FXML
@@ -32,13 +37,22 @@ public class NewDownloadTaskViewController {
 
     private final NewDownloadTaskViewModel viewModel = new NewDownloadTaskViewModel();
 
-    public void init() {
+    public void initialize() {
         threadCountSlider.valueProperty().bindBidirectional(viewModel.taskMaxThreadCountProperty());
         urlTextField.textProperty().bindBidirectional(viewModel.urlProperty());
         saveFilename.textProperty().bindBidirectional(viewModel.filenameProperty());
         this.threadCountSlider.setValue(ApplicationStore.getSystemConfig().getDefaultThreadCount());
         this.advOptionHBox.setVisible(isShowAdvOption);
         this.showAdvOptionCheckBox.setSelected(isShowAdvOption);
+        vBox.addEventHandler(Tab.SELECTION_CHANGED_EVENT, event -> {
+            if (event.getTarget() == vBox) {
+                event.consume();
+                if (logger.isDebugEnabled()) {
+                    logger.debug("切换到: 新建下载 Tab");
+                }
+                this.threadCountSlider.setValue(ApplicationStore.getSystemConfig().getDefaultThreadCount());
+            }
+        });
     }
 
     public void downBtnClick() {
@@ -52,7 +66,7 @@ public class NewDownloadTaskViewController {
     }
 
     private boolean validateUrl(String url) {
-        if (url == null || "".equals(url.trim())) {
+        if (url == null || url.trim().isEmpty()) {
             showAlert("请输入URL！");
             return false;
         }

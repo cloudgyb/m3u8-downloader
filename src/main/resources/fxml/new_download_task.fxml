@@ -4,6 +4,7 @@
 <?import javafx.scene.layout.*?>
 <?import java.lang.String?>
 <VBox fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.NewDownloadTaskViewController" alignment="CENTER"
+      fx:id="vBox"
       prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
     <HBox alignment="CENTER" prefWidth="600.0">
         <TextField fx:id="urlTextField" minHeight="38.0" prefHeight="38.0" prefWidth="512.0"

@@ -4,6 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.StackPane?>
 <StackPane fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.DownloadListViewController"
+           fx:id="stackPane"
            xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8">
     <TableView fx:id="downloadTable" editable="true">
         <columns>
