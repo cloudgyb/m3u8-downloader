@@ -26,4 +26,14 @@ public class Alerts {
         Optional<ButtonType> result = alert.showAndWait();
         return result.isPresent() && result.get() == ButtonType.OK;
     }
+
+    public static void alert(String title, String header, String content) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(icon); // 设置图标
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
 }

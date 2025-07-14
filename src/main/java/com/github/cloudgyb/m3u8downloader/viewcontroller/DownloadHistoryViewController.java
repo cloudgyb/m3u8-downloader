@@ -85,9 +85,11 @@ public class DownloadHistoryViewController {
         stackPane.addEventHandler(Tab.SELECTION_CHANGED_EVENT, event -> {
             if (event.getTarget() == stackPane) {
                 event.consume();
+                selectAllCheckBox.setSelected(false);
                 if (logger.isDebugEnabled()) {
                     logger.debug("切换到: {}", tableView.getId());
                 }
+                pagination.setCurrentPageIndex(0);
                 getPageData(0);
             }
         });
@@ -97,19 +99,17 @@ public class DownloadHistoryViewController {
     private void listenDeleteSelectedBtnClick() {
         deleteSelectedBtn.setOnAction(e -> {
             FilteredList<DownloadTaskHistoryViewModel> checkedViewModels =
-                    tableView.getItems().filtered(DownloadTaskHistoryViewModel::isChecked);
+                    items.filtered(DownloadTaskHistoryViewModel::isChecked);
             if (checkedViewModels.isEmpty()) {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("提示");
-                alert.setHeaderText("请选择要删除的项");
-                alert.showAndWait();
+                Alerts.alert("提示", null, "请选择要删除的项");
                 return;
             }
 
             if (confirmDelete(checkedViewModels.size())) {
                 checkedViewModels.forEach(
-                        e1 -> e1.delete(tableView.getItems())
+                        e1 -> e1.delete(null, false)
                 );
+                items.removeIf(DownloadTaskHistoryViewModel::isChecked);
                 refreshDataIfCurrPageIsEmpty();
             }
         });

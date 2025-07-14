@@ -26,15 +26,14 @@ public class DownloadTaskHistoryViewModel {
     private static final Logger log = LoggerFactory.getLogger(DownloadTaskHistoryViewModel.class);
     private final static DownloadTaskService downloadTaskService = DownloadTaskService.getInstance();
 
-    private final BooleanProperty checked = new SimpleBooleanProperty(false);
-    private final IntegerProperty id = new SimpleIntegerProperty(0);
-    private final StringProperty url = new SimpleStringProperty("");
-    private final StringProperty createTime = new SimpleStringProperty("");
-    private final StringProperty finishTime = new SimpleStringProperty("");
-    private final StringProperty duration = new SimpleStringProperty("");
-    private final StringProperty saveFilename = new SimpleStringProperty("");
-    private final StringProperty filepath = new SimpleStringProperty("");
-
+    private final SimpleBooleanProperty checked = new SimpleBooleanProperty(false);
+    private final SimpleIntegerProperty id = new SimpleIntegerProperty(0);
+    private final SimpleStringProperty url = new SimpleStringProperty("");
+    private final SimpleStringProperty createTime = new SimpleStringProperty("");
+    private final SimpleStringProperty finishTime = new SimpleStringProperty("");
+    private final SimpleStringProperty duration = new SimpleStringProperty("");
+    private final SimpleStringProperty saveFilename = new SimpleStringProperty("");
+    private final SimpleStringProperty filepath = new SimpleStringProperty("");
 
     public DownloadTaskHistoryViewModel(DownloadTaskEntity entity) {
         this.checked.set(false);
@@ -153,12 +152,16 @@ public class DownloadTaskHistoryViewModel {
         }
     }
 
-    public void delete(ObservableList<DownloadTaskHistoryViewModel> items) {
-        boolean isConfirm = Alerts.confirm("确认删除", null, "确定要删除该项吗?");
-        if (!isConfirm) {
-            return;
+    public void delete(ObservableList<DownloadTaskHistoryViewModel> items, boolean isNeedConfirm) {
+        if (isNeedConfirm) {
+            boolean isConfirm = Alerts.confirm("确认删除", null, "确定要删除该项吗?");
+            if (!isConfirm) {
+                return;
+            }
         }
-        items.remove(this);
+        if (items != null && !items.isEmpty()) {
+            items.remove(this);
+        }
         String filePath = filepath.get();
         if (filePath != null) {
             final File file = new File(filePath);
