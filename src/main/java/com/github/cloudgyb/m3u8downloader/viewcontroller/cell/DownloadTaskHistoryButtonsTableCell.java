@@ -26,7 +26,8 @@ public class DownloadTaskHistoryButtonsTableCell extends TableCell<DownloadTaskH
         playBtn.setStyle(BootstrapStyle.btnXsStyle + BootstrapStyle.btnSuccessStyle);
         playBtn.setOnMouseClicked(e -> getTableView().getItems().get(getIndex()).playFile());
         delBtn.setStyle(BootstrapStyle.btnXsStyle + BootstrapStyle.btnDangerStyle);
-        delBtn.setOnMouseClicked(e -> getTableView().getItems().get(getIndex()).delete(getTableView().getItems()));
+        delBtn.setOnMouseClicked(e -> getTableView().getItems().get(getIndex())
+                .delete(getTableView().getItems(), true));
     }
 
     public static Callback<TableColumn<DownloadTaskHistoryViewModel, Integer>,

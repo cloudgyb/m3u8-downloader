@@ -20,11 +20,14 @@ public class TooltipTableCell<S, T> extends TableCell<S, T> {
     }
 
     @Override
-    protected void updateItem(T t, boolean b) {
-        super.updateItem(t, b);
+    protected void updateItem(T t, boolean empty) {
+        super.updateItem(t, empty);
         if (t != null) {
             setText(t.toString());
             setTooltip(new Tooltip(t.toString()));
+        } else {
+            setText(null);
+            setTooltip(null);
         }
     }
 }
