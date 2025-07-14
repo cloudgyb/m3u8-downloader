@@ -3,6 +3,7 @@ package com.github.cloudgyb.m3u8downloader.model;
 import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
 import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
 import com.github.cloudgyb.m3u8downloader.util.OSUtil;
+import com.github.cloudgyb.m3u8downloader.util.SystemCommandUtil;
 import javafx.beans.property.*;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
@@ -73,18 +74,21 @@ public class DownloadTaskHistoryViewModel {
 
     public void openFile() {
         final File file = new File(filepath.get());
-        String command = "explorer.exe /select,";
+        String command = "explorer.exe /select," + file.getAbsolutePath();
         if (OSUtil.IS_WINDOWS) {
-            command = "explorer.exe /select,";
+            command = "explorer.exe /select," + file.getAbsolutePath();
         } else if (OSUtil.IS_MAC) {
-            command = "open ";
+            command = "open '" + file.getParent() + "'";
         } else if (OSUtil.IS_LINUX) {
-            command = "xdg-open ";
+            command = "xdg-open '" + file.getParent() + "'";
         }
         if (file.exists()) {
-            try {
-                Runtime.getRuntime().exec(command + file.getAbsolutePath());
-            } catch (Exception ignored) {
+            SystemCommandUtil.CommandExecResult commandExecResult =
+                    SystemCommandUtil.execWithExitCodeAndResult(command);
+            if (commandExecResult.getExitCode() == 0) {
+                log.info("已打开 {}", file.getAbsolutePath());
+            } else {
+                log.warn("打开 {} 可能失败！", file.getAbsolutePath());
             }
         } else {
             final Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -95,16 +99,23 @@ public class DownloadTaskHistoryViewModel {
     }
 
     public void playFile() {
-        String command = "cmd /c start ";
+        String command = "cmd /c start " + filepath.get();
         if (OSUtil.IS_WINDOWS) {
-            command = "cmd /c start ";
+            command = "cmd /c start " + filepath.get();
         } else if (OSUtil.IS_MAC) {
-            command = "open ";
+            command = "open '" + filepath.get() + "'";
         } else if (OSUtil.IS_LINUX) {
-            command = "xdg-open ";
+            command = "xdg-open '" + filepath.get() + "'";
         }
         try {
-            Runtime.getRuntime().exec(command + filepath.get());
+            SystemCommandUtil.CommandExecResult commandExecResult =
+                    SystemCommandUtil.execWithExitCodeAndResult(command);
+            if (commandExecResult.getExitCode() == 0) {
+                log.info("已播放 {}", filepath.get());
+            } else {
+                log.warn("播放 {} 可能失败！", filepath.get());
+                throw new RuntimeException("播放失败！");
+            }
         } catch (Exception e) {
             log.error("播放失败！", e);
             final Alert alert = new Alert(Alert.AlertType.ERROR);
