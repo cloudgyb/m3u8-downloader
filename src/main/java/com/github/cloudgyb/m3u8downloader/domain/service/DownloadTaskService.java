@@ -1,5 +1,6 @@
 package com.github.cloudgyb.m3u8downloader.domain.service;
 
+import com.github.cloudgyb.m3u8downloader.database.Page;
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStageEnum;
 import com.github.cloudgyb.m3u8downloader.domain.dao.DownloadTaskDao;
 import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
@@ -45,6 +46,7 @@ public class DownloadTaskService {
         return downloadTaskDao.selectByStatus(DownloadTaskStageEnum.FINISHED.name(), false);
     }
 
+    @SuppressWarnings("unused")
     public List<DownloadTaskHistoryViewModel> getAllFinishedTask() {
         List<DownloadTaskEntity> downloadTaskEntities = downloadTaskDao.selectByStatus(DownloadTaskStageEnum.FINISHED.name(), true);
         return downloadTaskEntities.stream().map(DownloadTaskHistoryViewModel::new).collect(Collectors.toList());
@@ -73,5 +75,9 @@ public class DownloadTaskService {
         if (i != 1) {
             log.error("更新任务保存文件名失败：id:{}", id);
         }
+    }
+
+    public Page<DownloadTaskEntity> getPage(int pageIndex, int pageSize) {
+        return downloadTaskDao.selectPage(pageIndex, pageSize, DownloadTaskStageEnum.FINISHED.name(), true);
     }
 }

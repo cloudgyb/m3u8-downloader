@@ -212,8 +212,49 @@ public class DownloadTaskDao implements IDao<DownloadTaskEntity, Integer> {
         return list;
     }
 
+    private static final String selectPageCountTotalByEqStatusSQL = "select count(*) from task where status = ?;";
+    private static final String selectPageCountTotalByNeqStatusSQL = "select count(*) from task where status != ?;";
+    private static final String selectPageByEqStatusSQL = "select * from task where status = ? order by finished_time desc limit ?,?;";
+    private static final String selectPageByNeqStatusSQL = "select * from task where status != ? order by finished_time desc limit ?,?;";
+
+    public Page<DownloadTaskEntity> selectPage(int pageNum, int pageSize, String statusName, boolean eq) {
+        Page<DownloadTaskEntity> page;
+        int total = 0;
+        try (Connection connection = DBUtil.getConnection()) {
+            try (PreparedStatement ps = connection.prepareStatement(eq ? selectPageCountTotalByEqStatusSQL : selectPageCountTotalByNeqStatusSQL);
+                 PreparedStatement ps1 = connection.prepareStatement(eq ? selectPageByEqStatusSQL : selectPageByNeqStatusSQL)) {
+                ps.setString(1, statusName);
+                ResultSet resultSet = ps.executeQuery();
+                if (resultSet.next()) {
+                    total = resultSet.getInt(1);
+                }
+                resultSet.close();
+                page = new Page<>(pageNum, pageSize, total);
+                if (total == 0) {
+                    return page;
+                }
+                ps1.setString(1, statusName);
+                ps1.setInt(2, pageNum * pageSize);
+                ps1.setInt(3, pageSize);
+                resultSet = ps1.executeQuery();
+                while (resultSet.next()) {
+                    DownloadTaskEntity downloadTaskEntity = rowHandler.apply(resultSet);
+                    page.add(downloadTaskEntity);
+                }
+                resultSet.close();
+            } catch (SQLException e) {
+                connection.rollback();
+                throw new RuntimeException(e);
+            }
+            connection.commit();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return page;
+    }
+
     private static final String selectPageCountTotalSQL = "select count(*) from task;";
-    private static final String selectPageSQL = "select * from task limit ?,?;";
+    private static final String selectPageSQL = "select * from task where status = ? order by finished_time desc limit ?,?;";
 
     @Override
     public Page<DownloadTaskEntity> selectPage(int pageNum, int pageSize) {
@@ -227,7 +268,7 @@ public class DownloadTaskDao implements IDao<DownloadTaskEntity, Integer> {
                     total = resultSet.getInt(1);
                 }
                 resultSet.close();
-                page = new Page<>(total, pageNum, pageSize);
+                page = new Page<>(pageNum, pageSize, total);
                 if (total == 0) {
                     return page;
                 }
