@@ -6,33 +6,26 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <StackPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+           fx:id="stackPane"
            fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.DownloadSettingViewController">
-    <children>
-        <VBox alignment="CENTER" maxHeight="140.0" maxWidth="630.0"
-              style="-fx-border-radius: 5px; -fx-border-style: solid; -fx-border-width: 1px; -fx-border-color: #ccc;">
-            <children>
-                <HBox minHeight="56.0">
-                    <children>
-                        <Label alignment="CENTER_RIGHT" prefWidth="156.0" text="下载目录："/>
-                        <TextField fx:id="downDirField" disable="true" prefWidth="383.0"/>
-                        <Hyperlink fx:id="changeDownDirLink" onAction="#changeDownDirLinkClick" text="更改"/>
-                    </children>
-                </HBox>
-                <HBox prefWidth="50.0">
-                    <children>
-                        <Label alignment="CENTER_RIGHT" prefWidth="156.0" text="每个下载任务线程数："/>
-                        <Slider fx:id="downThreadCountSlider" majorTickUnit="1.0" max="5.0" min="1.0" minorTickCount="0"
-                                onScrollFinished="#changeDefaultThreadCount" prefWidth="386.0" showTickLabels="true"
-                                showTickMarks="true" snapToTicks="true" value="1.0"/>
-                    </children>
-                </HBox>
-            </children>
-            <padding>
-                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
-            </padding>
-        </VBox>
-    </children>
     <padding>
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
     </padding>
+    <VBox alignment="CENTER" maxHeight="140.0" maxWidth="630.0"
+          style="-fx-border-radius: 5px; -fx-border-style: solid; -fx-border-width: 1px; -fx-border-color: #ccc;">
+        <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
+        </padding>
+        <HBox minHeight="56.0">
+            <Label alignment="CENTER_RIGHT" prefWidth="156.0" text="下载目录："/>
+            <TextField fx:id="downDirField" disable="true" prefWidth="383.0"/>
+            <Hyperlink fx:id="changeDownDirLink" onAction="#changeDownDirLinkClick" text="更改"/>
+        </HBox>
+        <HBox prefWidth="50.0">
+            <Label alignment="CENTER_RIGHT" prefWidth="156.0" text="每个下载任务线程数："/>
+            <Slider fx:id="downThreadCountSlider" majorTickUnit="1.0" max="5.0" min="1.0" minorTickCount="0"
+                    onScrollFinished="#changeDefaultThreadCount" prefWidth="386.0" showTickLabels="true"
+                    showTickMarks="true" snapToTicks="true" value="1.0"/>
+        </HBox>
+    </VBox>
 </StackPane>

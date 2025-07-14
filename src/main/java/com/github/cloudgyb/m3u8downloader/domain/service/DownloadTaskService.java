@@ -3,10 +3,12 @@ package com.github.cloudgyb.m3u8downloader.domain.service;
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStageEnum;
 import com.github.cloudgyb.m3u8downloader.domain.dao.DownloadTaskDao;
 import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
+import com.github.cloudgyb.m3u8downloader.model.DownloadTaskHistoryViewModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 下载任务服务
@@ -43,8 +45,9 @@ public class DownloadTaskService {
         return downloadTaskDao.selectByStatus(DownloadTaskStageEnum.FINISHED.name(), false);
     }
 
-    public List<DownloadTaskEntity> getAllFinishedTask() {
-        return downloadTaskDao.selectByStatus(DownloadTaskStageEnum.FINISHED.name(), true);
+    public List<DownloadTaskHistoryViewModel> getAllFinishedTask() {
+        List<DownloadTaskEntity> downloadTaskEntities = downloadTaskDao.selectByStatus(DownloadTaskStageEnum.FINISHED.name(), true);
+        return downloadTaskEntities.stream().map(DownloadTaskHistoryViewModel::new).collect(Collectors.toList());
     }
 
     public void deleteById(Integer id) {
@@ -60,6 +63,9 @@ public class DownloadTaskService {
 
     public void updateById(DownloadTaskEntity task) {
         int i = downloadTaskDao.updateById(task);
+        if (i != 1) {
+            log.error("更新任务失败：{}", task);
+        }
     }
 
     public void updateSaveFilename(Integer id, String newSaveFilename) {

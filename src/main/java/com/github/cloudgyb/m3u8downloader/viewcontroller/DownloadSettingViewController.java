@@ -1,15 +1,15 @@
 package com.github.cloudgyb.m3u8downloader.viewcontroller;
 
 import com.github.cloudgyb.m3u8downloader.ApplicationStore;
-import com.github.cloudgyb.m3u8downloader.domain.entity.SystemConfig;
 import com.github.cloudgyb.m3u8downloader.domain.dao.SystemConfigDao;
+import com.github.cloudgyb.m3u8downloader.domain.entity.SystemConfig;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Hyperlink;
-import javafx.scene.control.Slider;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.layout.StackPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
@@ -20,18 +20,19 @@ import java.io.File;
  * 2021/5/19 10:24
  */
 public class DownloadSettingViewController {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private SystemConfigDao configDao;
     private final SystemConfig systemConfig = ApplicationStore.getSystemConfig();
     @FXML
+    public StackPane stackPane;
+    @FXML
     private TextField downDirField;
-
     @FXML
     private Hyperlink changeDownDirLink;
-
     @FXML
     private Slider downThreadCountSlider;
-    
-    public void init() {
+
+    public void initialize() {
         configDao = new SystemConfigDao();
         downDirField.setText(systemConfig.getDownloadDir());
         downThreadCountSlider.setValue(systemConfig.getDefaultThreadCount());
@@ -40,6 +41,15 @@ public class DownloadSettingViewController {
             int newV = newValue.intValue();
             if (oldV != newV)
                 changeDefaultThreadCount();
+        });
+        stackPane.addEventHandler(Tab.SELECTION_CHANGED_EVENT, event -> {
+            if (event.getTarget() == stackPane) {
+                event.consume();
+                if (logger.isDebugEnabled()) {
+                    logger.debug("切换到: 设置 Tab");
+                }
+                downThreadCountSlider.setValue(systemConfig.getDefaultThreadCount());
+            }
         });
     }
 

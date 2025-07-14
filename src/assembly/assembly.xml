@@ -28,9 +28,6 @@
             <excludes>
                 <exclude>ffmpeg*.zip</exclude>
             </excludes>
-            <!-- 强制覆盖已存在文件 -->
-            <filtered>true</filtered>
-            <useDefaultExcludes>true</useDefaultExcludes>
         </fileSet>
         <fileSet>
             <directory>src/assembly/conf/</directory>

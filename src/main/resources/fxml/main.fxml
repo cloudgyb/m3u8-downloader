@@ -1,11 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.*?>
-<TabPane fx:id="tabPane" fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.MainViewController"
+<TabPane fx:id="tabPane"
+         fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.MainViewController"
          prefHeight="400.0" prefWidth="800.0" tabClosingPolicy="UNAVAILABLE"
          xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
-    <Tab onSelectionChanged="#newDownloadTaskTabSelected" text="新建下载任务"/>
-    <Tab onSelectionChanged="#downloadListTabSelected" text="当前下载"/>
-    <Tab onSelectionChanged="#downloadHistoryTabSelected" text="下载历史"/>
-    <Tab onSelectionChanged="#downloadSettingTabSelected" text="下载设置"/>
+    <Tab fx:id="newTaskTab" text="新建下载任务">
+        <fx:include source="new_download_task.fxml"/>
+    </Tab>
+    <Tab fx:id="downloadingTab" text="当前下载">
+        <fx:include source="download_list.fxml"/>
+    </Tab>
+    <Tab fx:id="downloadHistoryTab" text="下载历史">
+        <fx:include source="download_history.fxml"/>
+    </Tab>
+    <Tab fx:id="settingTab" text="下载设置">
+        <fx:include source="setting.fxml"/>
+    </Tab>
 </TabPane>
