@@ -2,6 +2,7 @@ package com.github.cloudgyb.m3u8downloader.model;
 
 import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
 import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
+import com.github.cloudgyb.m3u8downloader.util.OSUtil;
 import javafx.beans.property.*;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
@@ -72,9 +73,17 @@ public class DownloadTaskHistoryViewModel {
 
     public void openFile() {
         final File file = new File(filepath.get());
+        String command = "explorer.exe /select,";
+        if (OSUtil.IS_WINDOWS) {
+            command = "explorer.exe /select,";
+        } else if (OSUtil.IS_MAC) {
+            command = "open ";
+        } else if (OSUtil.IS_LINUX) {
+            command = "xdg-open ";
+        }
         if (file.exists()) {
             try {
-                Runtime.getRuntime().exec("explorer.exe /select," + file.getAbsolutePath());
+                Runtime.getRuntime().exec(command + file.getAbsolutePath());
             } catch (Exception ignored) {
             }
         } else {
@@ -86,8 +95,16 @@ public class DownloadTaskHistoryViewModel {
     }
 
     public void playFile() {
+        String command = "cmd /c start ";
+        if (OSUtil.IS_WINDOWS) {
+            command = "cmd /c start ";
+        } else if (OSUtil.IS_MAC) {
+            command = "open ";
+        } else if (OSUtil.IS_LINUX) {
+            command = "xdg-open ";
+        }
         try {
-            Runtime.getRuntime().exec("cmd /c start " + filepath.get());
+            Runtime.getRuntime().exec(command + filepath.get());
         } catch (Exception e) {
             log.error("播放失败！", e);
             final Alert alert = new Alert(Alert.AlertType.ERROR);
