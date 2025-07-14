@@ -74,13 +74,19 @@ public class DownloadTaskHistoryViewModel {
 
     public void openFile() {
         final File file = new File(filepath.get());
-        String command = "explorer.exe /select," + file.getAbsolutePath();
+        String[] command;
         if (OSUtil.IS_WINDOWS) {
-            command = "explorer.exe /select," + file.getAbsolutePath();
+            command = new String[]{"explorer.exe", "/select," + file.getAbsolutePath()};
         } else if (OSUtil.IS_MAC) {
-            command = "open '" + file.getParent() + "'";
+            command = new String[]{"open", file.getParent()};
         } else if (OSUtil.IS_LINUX) {
-            command = "xdg-open '" + file.getParent() + "'";
+            command = new String[]{"xdg-open", file.getParent()};
+        } else {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("错误");
+            alert.setContentText("该操作系统不支持！");
+            alert.showAndWait();
+            return;
         }
         if (file.exists()) {
             SystemCommandUtil.CommandExecResult commandExecResult =
@@ -99,13 +105,19 @@ public class DownloadTaskHistoryViewModel {
     }
 
     public void playFile() {
-        String command = "cmd /c start " + filepath.get();
+        String[] command;
         if (OSUtil.IS_WINDOWS) {
-            command = "cmd /c start " + filepath.get();
+            command = new String[]{"cmd /c start " + filepath.get()};
         } else if (OSUtil.IS_MAC) {
-            command = "open '" + filepath.get() + "'";
+            command = new String[]{"open", filepath.get()};
         } else if (OSUtil.IS_LINUX) {
-            command = "xdg-open '" + filepath.get() + "'";
+            command = new String[]{"xdg-open", filepath.get()};
+        } else {
+            final Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("错误");
+            alert.setContentText("该操作操作系统不支持！");
+            alert.showAndWait();
+            return;
         }
         try {
             SystemCommandUtil.CommandExecResult commandExecResult =
