@@ -38,6 +38,8 @@ public class DownloadHistoryViewController {
     @FXML
     public TableColumn<DownloadTaskHistoryViewModel, Boolean> checkColumn;
     @FXML
+    public TableColumn<DownloadTaskHistoryViewModel, String> filenameColumn;
+    @FXML
     private TableColumn<DownloadTaskHistoryViewModel, String> urlColumn;
     @FXML
     private TableColumn<DownloadTaskHistoryViewModel, String> createTimeColumn;
@@ -72,6 +74,8 @@ public class DownloadHistoryViewController {
         checkColumn.setCellValueFactory(
                 row -> row.getValue().checkedProperty()
         );
+        filenameColumn.setCellFactory(TooltipTableCell.cellFactory());
+        filenameColumn.setCellValueFactory(new PropertyValueFactory<>("saveFilename"));
         urlColumn.setCellFactory(TooltipTableCell.cellFactory());
         urlColumn.setCellValueFactory(new PropertyValueFactory<>("url"));
         createTimeColumn.setCellFactory(TooltipTableCell.cellFactory());

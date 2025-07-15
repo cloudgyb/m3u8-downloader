@@ -19,6 +19,7 @@
                     <CheckBox fx:id="selectAllCheckBox" mnemonicParsing="false"/>
                 </graphic>
             </TableColumn>
+            <TableColumn fx:id="filenameColumn" style="-fx-alignment: center" text="文件名"/>
             <TableColumn fx:id="urlColumn" style="-fx-alignment: center" text="URL"/>
             <TableColumn fx:id="createTimeColumn" style="-fx-alignment: center" text="创建时间"/>
             <TableColumn fx:id="finishTimeColumn" sortType="DESCENDING" style="-fx-alignment: center" text="完成时间"/>
