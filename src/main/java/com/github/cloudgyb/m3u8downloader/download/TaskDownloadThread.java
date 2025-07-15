@@ -146,6 +146,7 @@ public class TaskDownloadThread extends Thread {
             task.setStage(DownloadTaskStageEnum.SEGMENT_MERGED.name());
             task.setStatus(DownloadTaskStatusEnum.RUNNING.name());
             task.setFilePath(targetFilePath);
+            task.setSaveFilename(saveFilename + ".mp4");
             downloadTaskService.updateById(task);
             publishStatus(DownloadTaskStatusEnum.RUNNING, 0.0, DownloadTaskStageEnum.SEGMENT_MERGED);
         } catch (Exception e) {
