@@ -38,3 +38,5 @@ pom.xml.next
 *.db
 
 !src/assembly/bin/*
+src/assembly/bin/ffmpeg.exe
+src/assembly/bin/ffmpeg

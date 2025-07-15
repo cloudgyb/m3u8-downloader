@@ -24,6 +24,10 @@ public final class FfmpegUtil {
         File tsFileList = File.createTempFile("m3u8_ts_list", ".txt");
         try (PrintWriter fileWriter = new PrintWriter(tsFileList, StandardCharsets.UTF_8)) {
             for (String sourceFile : sourceFiles) {
+                File file = new File(sourceFile);
+                if (file.length() == 0) {
+                    continue;
+                }
                 fileWriter.println("file '" + sourceFile + "'");
             }
         }

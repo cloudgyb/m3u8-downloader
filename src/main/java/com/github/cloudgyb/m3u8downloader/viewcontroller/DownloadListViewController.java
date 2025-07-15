@@ -15,6 +15,7 @@ import javafx.scene.layout.StackPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 /**
@@ -152,8 +153,8 @@ public class DownloadListViewController {
                 if (stage != null) {
                     String labelText = stage.getStatus();
                     if (stage == DownloadTaskStageEnum.DOWNLOADING && progressValue != null) {
-                        String s = String.valueOf(progressValue * 100);
-                        labelText = (s.length() > 5 ? s.substring(0, 5) : s) + "%";
+                        DecimalFormat decimalFormat = new DecimalFormat("##.0%");
+                        labelText = decimalFormat.format(progressValue);
                     } else if (stage == DownloadTaskStageEnum.FINISHED) {
                         downloadTable.getItems().remove(getIndex());
                         downloadTable.refresh();
