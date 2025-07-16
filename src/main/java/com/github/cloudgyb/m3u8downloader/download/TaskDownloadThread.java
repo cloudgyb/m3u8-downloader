@@ -38,8 +38,9 @@ import java.util.stream.Collectors;
  */
 public class TaskDownloadThread extends Thread {
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final int cpuCores = Runtime.getRuntime().availableProcessors();
     private static final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(
-            200, 500, 2, TimeUnit.SECONDS,
+            cpuCores * 10, cpuCores * 20, 2, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(1000), new TaskDownloadThreadFactory(),
             new ThreadPoolExecutor.AbortPolicy());
     private final M3U8Parser m3U8Parser = new M3U8Parser();
