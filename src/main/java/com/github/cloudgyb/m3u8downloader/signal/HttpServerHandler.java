@@ -59,7 +59,7 @@ public class HttpServerHandler implements SignalHandler {
         entity.setTotalMediaSegment(0);
         int maxThread = ApplicationStore.getSystemConfig().getDefaultThreadCount();
         entity.setMaxThreadCount(maxThread);
-        entity.setSaveFilename(crxNewDownloadTask.getTitle());
+        entity.setSaveFilename(crxNewDownloadTask.getTitle().replace(" ",""));
         entity.setStage(DownloadTaskStageEnum.NEW.name());
         entity.setStatus(DownloadTaskStageEnum.NEW.name());
         downloadTaskService.save(entity);
