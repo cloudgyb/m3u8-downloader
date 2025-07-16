@@ -40,7 +40,7 @@ public class TaskDownloadThread extends Thread {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final int cpuCores = Runtime.getRuntime().availableProcessors();
     private static final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(
-            cpuCores * 10, cpuCores * 20, 2, TimeUnit.SECONDS,
+            cpuCores * 10, cpuCores * 20, 60, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(1000), new TaskDownloadThreadFactory(),
             new ThreadPoolExecutor.AbortPolicy());
     private final M3U8Parser m3U8Parser = new M3U8Parser();
@@ -53,6 +53,10 @@ public class TaskDownloadThread extends Thread {
      * 下载字节计数器，用于计算速率
      */
     private final AtomicLong bytesCounter = new AtomicLong();
+
+    static {
+        threadPool.allowCoreThreadTimeOut(true);
+    }
 
     public TaskDownloadThread(DownloadTaskEntity task) {
         this.task = task;
