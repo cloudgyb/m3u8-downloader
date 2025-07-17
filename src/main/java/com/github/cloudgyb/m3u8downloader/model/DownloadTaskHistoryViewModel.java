@@ -122,7 +122,7 @@ public class DownloadTaskHistoryViewModel {
     public void playFile() {
         String[] command;
         if (OSUtil.IS_WINDOWS) {
-            command = new String[]{"cmd /c start " + filepath.get()};
+            command = new String[]{"cmd", "/c", "start", " ", "\"" + filepath.get() + "\""};
         } else if (OSUtil.IS_MAC) {
             command = new String[]{"open", filepath.get()};
         } else if (OSUtil.IS_LINUX) {

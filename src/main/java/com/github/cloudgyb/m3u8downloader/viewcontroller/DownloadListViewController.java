@@ -5,6 +5,7 @@ import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStageEnum;
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStatusEnum;
 import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
 import com.github.cloudgyb.m3u8downloader.model.ProgressAndStatus;
+import com.github.cloudgyb.m3u8downloader.viewcontroller.cell.TooltipTableCell;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -65,7 +66,9 @@ public class DownloadListViewController {
             String newSaveFilename = event.getNewValue();
             viewModel.updateSaveFileName(newSaveFilename);
         });
+        createTimeColumn.setCellFactory(TooltipTableCell.cellFactory());
         createTimeColumn.setCellValueFactory(new PropertyValueFactory<>("createTime"));
+        urlColumn.setCellFactory(TooltipTableCell.cellFactory());
         urlColumn.setCellValueFactory(new PropertyValueFactory<>("url"));
         progressColumn.setCellFactory(cell -> {
             TableCell<DownloadTaskViewModel, ProgressAndStatus> c1 = new ProgressBarWithLabelTableCell();

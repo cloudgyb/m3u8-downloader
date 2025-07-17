@@ -38,8 +38,9 @@ import java.util.stream.Collectors;
  */
 public class TaskDownloadThread extends Thread {
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final int cpuCores = Runtime.getRuntime().availableProcessors();
     private static final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(
-            200, 500, 2, TimeUnit.SECONDS,
+            cpuCores * 10, cpuCores * 20, 60, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(1000), new TaskDownloadThreadFactory(),
             new ThreadPoolExecutor.AbortPolicy());
     private final M3U8Parser m3U8Parser = new M3U8Parser();
@@ -53,8 +54,13 @@ public class TaskDownloadThread extends Thread {
      */
     private final AtomicLong bytesCounter = new AtomicLong();
 
+    static {
+        threadPool.allowCoreThreadTimeOut(true);
+    }
+
     public TaskDownloadThread(DownloadTaskEntity task) {
         this.task = task;
+        setName("TaskDownloadManageThread " + task.getId());
     }
 
     @Override
@@ -141,12 +147,13 @@ public class TaskDownloadThread extends Thread {
             if (saveFilename == null || saveFilename.trim().isEmpty()) {
                 saveFilename = String.valueOf(tid);
             }
-            String targetFilePath = downloadDir + File.separator + saveFilename + ".mp4";
+            saveFilename = saveFilename.replace(" ", "") + ".mp4"; // windows 打开文件时，文件名不能有空格
+            String targetFilePath = downloadDir + File.separator + saveFilename;
             FfmpegUtil.mergeTS(fileSegments, targetFilePath, true);
             task.setStage(DownloadTaskStageEnum.SEGMENT_MERGED.name());
             task.setStatus(DownloadTaskStatusEnum.RUNNING.name());
             task.setFilePath(targetFilePath);
-            task.setSaveFilename(saveFilename + ".mp4");
+            task.setSaveFilename(saveFilename);
             downloadTaskService.updateById(task);
             publishStatus(DownloadTaskStatusEnum.RUNNING, 0.0, DownloadTaskStageEnum.SEGMENT_MERGED);
         } catch (Exception e) {
@@ -273,7 +280,7 @@ public class TaskDownloadThread extends Thread {
     private void m3u8IndexParse() {
         int tid = task.getId();
         String url = task.getUrl();
-        logger.info("开始解析任务对应的 m3u8 url: {}-tid:{}", url, tid);
+        logger.info("开始解析任务对应的 m3u8 url: {} tid:{}", url, tid);
         task.setStage(DownloadTaskStageEnum.M3U8_PARSING.name());
         task.setStatus(DownloadTaskStatusEnum.RUNNING.name());
         downloadTaskService.updateById(task);
@@ -286,17 +293,19 @@ public class TaskDownloadThread extends Thread {
             List<MediaSegment> mediaSegments = res.get();
             if (!mediaSegments.isEmpty()) {
                 mediaSegmentService.saveAllMediaSegments(tid, mediaSegments);
+            } else {
+                throw new RuntimeException("解析 m3u8 索引文件失败，文件内容为空！");
             }
             task.setTotalMediaSegment(mediaSegments.size());
             task.setFinishMediaSegment(0);
             task.setStage(DownloadTaskStageEnum.M3U8_PARSED.name());
             task.setStatus(DownloadTaskStatusEnum.RUNNING.name());
             publishStatus(DownloadTaskStatusEnum.RUNNING, null, DownloadTaskStageEnum.M3U8_PARSED);
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             task.setStage(DownloadTaskStageEnum.M3U8_PARSE_FAILED.name());
             task.setStatus(DownloadTaskStatusEnum.STOPPED_ERROR.name());
             publishStatus(DownloadTaskStatusEnum.STOPPED_ERROR, null, DownloadTaskStageEnum.M3U8_PARSE_FAILED);
-            logger.error("解析任务对应的 m3u8 url: {}-tid:{} 失败！", url, tid, e);
+            logger.error("解析任务对应的 m3u8 url: {} tid:{} 失败！", url, tid, e);
         }
         downloadTaskService.updateById(task);
     }
