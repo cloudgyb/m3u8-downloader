@@ -3,7 +3,7 @@
 <configuration scan="true" scanPeriod="60 seconds" debug="false">
     <!-- 定义参数常量，便于后面直接用${name}来获取value值 -->
     <property name="log.pattern"
-              value="%highlight(%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n){TRACE=CYAN, DEBUG=GREEN, INFO=BLUE, WARN=YELLOW, ERROR=RED}"/>
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%p) [%thread] %logger{36} - %msg%n"/>
     <property name="log.filePath" value="logs/"/>
     <property name="log.maxHistory" value="7"/>
 
