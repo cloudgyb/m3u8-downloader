@@ -1,11 +1,14 @@
 package com.github.cloudgyb.m3u8downloader.viewcontroller;
 
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 import java.util.Optional;
+
+import static com.github.cloudgyb.m3u8downloader.viewcontroller.BootstrapStyle.*;
 
 /**
  * 弹窗工具类
@@ -23,6 +26,10 @@ public class Alerts {
         alert.setTitle(title);
         alert.setHeaderText(header);
         alert.setContentText(content);
+        Button okButton = (Button) alert.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.setStyle(btnSmStyle + btnDangerStyle);
+        Button cancelButton = (Button) alert.getDialogPane().lookupButton(ButtonType.CANCEL);
+        cancelButton.setStyle(btnSmStyle + btnPrimaryStyle);
         Optional<ButtonType> result = alert.showAndWait();
         return result.isPresent() && result.get() == ButtonType.OK;
     }

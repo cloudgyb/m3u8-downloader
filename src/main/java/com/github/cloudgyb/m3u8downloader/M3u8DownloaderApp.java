@@ -9,9 +9,6 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
@@ -26,9 +23,6 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Optional;
-
-import static com.github.cloudgyb.m3u8downloader.viewcontroller.BootstrapStyle.*;
 
 /**
  * APP entrypoint
@@ -41,6 +35,7 @@ public class M3u8DownloaderApp extends Application {
     private static volatile Stage primaryStage;
     private static final int signalServerPort = 65530;
     private static SignalServer signalServer;
+    private final ApplicationSystemTray systemTray = new ApplicationSystemTray();
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -54,27 +49,7 @@ public class M3u8DownloaderApp extends Application {
         primaryStage.getScene()
                 .getStylesheets()
                 .add(BootstrapFX.bootstrapFXStylesheet());
-
-        primaryStage.setOnCloseRequest(event -> {
-            Alert exitConfirm = new Alert(Alert.AlertType.CONFIRMATION);
-            exitConfirm.setTitle("提示");
-            exitConfirm.setHeaderText("确定退出吗？");
-            // Load the image
-            Image icon = new Image("/icon.png");
-            Stage stage = (Stage) exitConfirm.getDialogPane().getScene().getWindow();
-            stage.getIcons().add(icon); // 设置图标
-            Button okButton = (Button) exitConfirm.getDialogPane().lookupButton(ButtonType.OK);
-            okButton.setStyle(btnSmStyle + btnDangerStyle);
-            Button cancelButton = (Button) exitConfirm.getDialogPane().lookupButton(ButtonType.CANCEL);
-            cancelButton.setStyle(btnSmStyle + btnPrimaryStyle);
-            Optional<ButtonType> result = exitConfirm.showAndWait();
-            if (result.isPresent() && result.get() == ButtonType.OK) {
-                primaryStage.close();
-            } else {
-                //将事件消费掉，停止传播
-                event.consume();
-            }
-        });
+        systemTray.init(primaryStage);
     }
 
     public static void main(String[] args) {
@@ -129,7 +104,12 @@ public class M3u8DownloaderApp extends Application {
 
     public static void toFront() {
         if (primaryStage != null) {
-            Platform.runLater(() -> primaryStage.toFront());
+            Platform.runLater(() -> {
+                primaryStage.show();
+                primaryStage.setIconified(false);
+                primaryStage.toFront();
+                primaryStage.requestFocus();
+            });
         }
     }
 }
