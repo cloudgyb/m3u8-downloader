@@ -57,6 +57,13 @@ https://media.example.com/third.ts
 + 直接打开播放（使用外部系统默认播放器）
 + ...
 
+## 法律声明
+
+在使用本软件之前，请务必阅读并理解以下法律文件：
+
++ [免责声明](docs/disclaimer.md)
++ [最终用户许可协议](docs/eula.md)
+
 ## 本地运行
 
 > Java版本必须>=11.0.2，因为项目使用了Java模块化开发
@@ -118,4 +125,3 @@ mvn clean package
 ## 参与开发
 
 请 Fork 本项目然后提交 PR。
-
