@@ -12,6 +12,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
 import java.util.Date;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * 任务新建视图模型
@@ -72,7 +73,11 @@ public class NewDownloadTaskViewModel {
         final DownloadTaskViewModel task = new DownloadTaskViewModel(entity);
         ApplicationStore.getNoFinishedTasks().add(task);
         // TaskDownloadService 负责整个下载过程
-        TaskDownloadThreadManager.getInstance().startDownloadThread(entity);
+        try {
+            TaskDownloadThreadManager.getInstance().startDownloadThread(entity);
+        } catch (RejectedExecutionException ignore) {
+            Alerts.alert("开始失败", "提示", "任务已达最大并发数，请稍后重试！");
+        }
     }
 
     public DownloadTaskEntity convertToDomain() {

@@ -8,9 +8,12 @@ import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
 import com.github.cloudgyb.m3u8downloader.download.TaskDownloadThreadManager;
 import com.github.cloudgyb.m3u8downloader.event.*;
 import com.github.cloudgyb.m3u8downloader.util.DateFormatter;
+import com.github.cloudgyb.m3u8downloader.viewcontroller.Alerts;
 import javafx.beans.property.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.RejectedExecutionException;
 
 
 /**
@@ -32,6 +35,7 @@ public class DownloadTaskViewModel implements EventAware {
     private final DownloadTaskEntity taskDomain;
     private final TaskDownloadThreadManager taskDownloadThreadManager = TaskDownloadThreadManager.getInstance();
     private final DownloadTaskService downloadTaskService = DownloadTaskService.getInstance();
+    private volatile boolean isStoped = false;
 
     /**
      * 构造一个下载任务视图模型
@@ -68,12 +72,18 @@ public class DownloadTaskViewModel implements EventAware {
     }
 
     public void start() {
-        taskDownloadThreadManager.startDownloadThread(this.taskDomain);
+        try {
+            isStoped = false;
+            taskDownloadThreadManager.startDownloadThread(this.taskDomain);
+        } catch (RejectedExecutionException ignore) {
+            Alerts.alert("开始失败", "提示", "任务已达最大并发数，请稍后重试！");
+        }
     }
 
 
     public void stop() {
         this.rate.set("-- KB/s");
+        this.isStoped = true;
         taskDownloadThreadManager.stopDownloadThread(this.taskDomain);
     }
 
@@ -169,6 +179,9 @@ public class DownloadTaskViewModel implements EventAware {
                 finish();
             }
         } else if (e instanceof DownloadRateChangeEvent) {
+            if (isStoped) { // 已停止就不更新下载速率了
+                return;
+            }
             DownloadRateChangeEvent event = (DownloadRateChangeEvent) e;
             int tid = event.getTid();
             // 是否是该任务

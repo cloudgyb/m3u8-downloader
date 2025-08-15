@@ -1,6 +1,7 @@
 package com.github.cloudgyb.m3u8downloader;
 
 import com.github.cloudgyb.m3u8downloader.database.DatabaseInitializer;
+import com.github.cloudgyb.m3u8downloader.download.TaskDownloadThreadManager;
 import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
 import com.github.cloudgyb.m3u8downloader.signal.HttpServerHandler;
 import com.github.cloudgyb.m3u8downloader.signal.RepeatProcessStartupSignalHandler;
@@ -99,6 +100,7 @@ public class M3u8DownloaderApp extends Application {
             noFinishedTask.stop();
         }
         logger.info("所有未完成下载任务已停止！退出...");
+        TaskDownloadThreadManager.getInstance().shutdown();
         System.exit(0);
     }
 

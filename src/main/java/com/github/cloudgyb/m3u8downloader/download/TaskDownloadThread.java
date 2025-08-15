@@ -18,9 +18,7 @@ import com.github.cloudgyb.m3u8downloader.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -49,6 +47,7 @@ public class TaskDownloadThread extends Thread {
     private final DownloadTaskService downloadTaskService = DownloadTaskService.getInstance();
     private final DownloadTaskStatusChangeEventNotifier eventNotifier = DownloadTaskStatusChangeEventNotifier.INSTANCE;
     private final AtomicBoolean isStopped = new AtomicBoolean(true);
+    private final TaskDownloadThreadManager taskDownloadThreadManager = TaskDownloadThreadManager.getInstance();
     /**
      * 下载字节计数器，用于计算速率
      */
@@ -73,7 +72,7 @@ public class TaskDownloadThread extends Thread {
             boolean needM3u8Parse = isNeedM3u8Parse(downloadTaskStageEnum);
             //先解析 m3u8 ，如果没有解析过
             if (needM3u8Parse) {
-                if (isStopped.get()) {
+                if (isStopOrThreadInterrupted()) {
                     return;
                 }
                 m3u8IndexParse();
@@ -88,7 +87,7 @@ public class TaskDownloadThread extends Thread {
             if (DownloadTaskStageEnum.M3U8_PARSED == downloadTaskStageEnum ||
                     DownloadTaskStageEnum.DOWNLOADING == downloadTaskStageEnum
                     || DownloadTaskStageEnum.DOWNLOAD_FAILED == downloadTaskStageEnum) {
-                if (isStopped.get()) {
+                if (isStopOrThreadInterrupted()) {
                     return;
                 }
                 downloadMediaSegments(task);
@@ -104,7 +103,7 @@ public class TaskDownloadThread extends Thread {
                     DownloadTaskStageEnum.SEGMENT_MERGING == downloadTaskStageEnum ||
                     DownloadTaskStageEnum.SEGMENT_MERGE_FAILED == downloadTaskStageEnum
             ) {
-                if (isStopped.get()) {
+                if (isStopOrThreadInterrupted()) {
                     return;
                 }
                 mergerMediaSegment(task);
@@ -115,7 +114,7 @@ public class TaskDownloadThread extends Thread {
             if (DownloadTaskStageEnum.SEGMENT_MERGE_FAILED == downloadTaskStageEnum) {
                 return;
             }
-            if (isStopped.get()) {
+            if (isStopOrThreadInterrupted()) {
                 return;
             }
             // 成功（完成）
@@ -127,9 +126,17 @@ public class TaskDownloadThread extends Thread {
             downloadTaskService.updateById(task);
             publishStatus(DownloadTaskStatusEnum.FINISHED, 100.0, DownloadTaskStageEnum.FINISHED);
         } finally {
+            taskDownloadThreadManager.removeFuture(task.getId());
             String reason = isStopped.get() ? "手动停止" : "下载完成";
+            isStopped.set(true);
+            @SuppressWarnings("unused")
+            boolean isInterrupted = Thread.interrupted(); // 清除线程中断状态
             logger.info("任务(ID:{})下载线程终止退出({})！", task.getId(), reason);
         }
+    }
+
+    private boolean isStopOrThreadInterrupted() {
+        return isStopped.get() || Thread.currentThread().isInterrupted();
     }
 
     private void mergerMediaSegment(DownloadTaskEntity task) {
@@ -181,7 +188,7 @@ public class TaskDownloadThread extends Thread {
                     ApplicationStore.getSystemConfig().getDefaultThreadCount() : maxThreadCount;
             logger.info("使用最大{}个线程去下载任务（ID:{}）", maxThreadCount, tid);
             for (; ; ) {
-                if (isStopped.get()) {
+                if (isStopOrThreadInterrupted()) {
                     return;
                 }
                 List<MediaSegmentEntity> mediaSegmentEntities = mediaSegmentService
@@ -202,7 +209,25 @@ public class TaskDownloadThread extends Thread {
                         FileUtil.ensureDirExist(tempDir);
                         File tempFile = new File(tempDir, mediaSegmentEntity.getId().toString() + ".ts");
                         FileOutputStream fos = new FileOutputStream(tempFile);
-                        DataStreamUtil.copy(inputStream, fos, true, true, bytesCounter);
+                        try {
+                            DataStreamUtil.copy(inputStream, fos, true, true, bytesCounter);
+                        } catch (IOException e) {
+                            logger.warn("下载媒体片段{}失败,Exception: {}", url, e.getMessage());
+                            if (e instanceof InterruptedIOException) {
+                                if (logger.isDebugEnabled()) {
+                                    logger.debug("下载媒体片段{}被中断", url);
+                                }
+                            }
+                            boolean delete = tempFile.delete();
+                            if (delete) {
+                                if (logger.isDebugEnabled()) {
+                                    logger.debug("删除临时文件{}成功", tempFile.getAbsolutePath());
+                                }
+                            } else {
+                                logger.warn("删除临时文件{}失败", tempFile.getAbsolutePath());
+                            }
+                            return null;
+                        }
                         mediaSegmentEntity.setFinished(true);
                         mediaSegmentEntity.setFilePath(tempFile.getAbsolutePath());
                         long endTime = System.currentTimeMillis();
@@ -228,8 +253,13 @@ public class TaskDownloadThread extends Thread {
                                 DownloadTaskStageEnum.DOWNLOADING
                         );
                     } catch (Exception e) {
-                        logger.error(e.getMessage());
-                        if (isStopped.get()) {
+                        logger.error("等待下载线程池中媒体片段下载完成是发生异常！{}", e.getClass());
+                        if (e instanceof InterruptedException) { // future.get() 中被中断
+                            Thread.currentThread().interrupt(); // 重新设置中断状态，让后续流程能够获取中断状态
+                        }
+                        if (isStopOrThreadInterrupted()) {
+                            futures.forEach(future1 -> future1.cancel(true));
+                            futures.clear();
                             logger.info("手动停止。。。");
                             return;
                         }
@@ -328,6 +358,7 @@ public class TaskDownloadThread extends Thread {
         );
     }
 
+    @SuppressWarnings("unused")
     public void stopDownload() {
         isStopped.set(true);
         // 产生中断，让等待的 Future 退出等待

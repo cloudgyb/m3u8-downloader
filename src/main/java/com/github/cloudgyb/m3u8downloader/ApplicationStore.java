@@ -5,7 +5,6 @@ import com.github.cloudgyb.m3u8downloader.domain.entity.SystemConfig;
 import com.github.cloudgyb.m3u8downloader.domain.dao.SystemConfigDao;
 import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
 import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
-import com.github.cloudgyb.m3u8downloader.download.TaskDownloadThreadManager;
 import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
 
 import java.io.File;
@@ -38,7 +37,6 @@ public class ApplicationStore {
             task.setStatus(statusEnum.name());
             final DownloadTaskViewModel downloadTaskViewModel = new DownloadTaskViewModel(task);
             noFinishedTask.add(downloadTaskViewModel);
-            TaskDownloadThreadManager.getInstance().createDownloadThread(task);
         }
         //初始化系统配置
         String defaultDownloadDir = System.getProperty("user.home") +
