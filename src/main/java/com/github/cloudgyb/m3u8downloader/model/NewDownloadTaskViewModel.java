@@ -1,11 +1,12 @@
-package com.github.cloudgyb.m3u8downloader.viewcontroller;
+package com.github.cloudgyb.m3u8downloader.model;
 
 import com.github.cloudgyb.m3u8downloader.ApplicationStore;
 import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStageEnum;
+import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStatusEnum;
 import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
 import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
 import com.github.cloudgyb.m3u8downloader.download.TaskDownloadThreadManager;
-import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
+import com.github.cloudgyb.m3u8downloader.viewcontroller.Alerts;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -55,6 +56,7 @@ public class NewDownloadTaskViewModel {
         return taskMaxThreadCount;
     }
 
+    @SuppressWarnings("unused")
     public void setTaskMaxThreadCount(double taskMaxThreadCount) {
         this.taskMaxThreadCount.set(taskMaxThreadCount);
     }
@@ -72,7 +74,7 @@ public class NewDownloadTaskViewModel {
         downloadTaskService.save(entity);
         final DownloadTaskViewModel task = new DownloadTaskViewModel(entity);
         ApplicationStore.getNoFinishedTasks().add(task);
-        // TaskDownloadService 负责整个下载过程
+        // TaskDownloadThreadManager 负责整个下载过程
         try {
             TaskDownloadThreadManager.getInstance().startDownloadThread(entity);
         } catch (RejectedExecutionException ignore) {
@@ -94,7 +96,7 @@ public class NewDownloadTaskViewModel {
         domain.setMaxThreadCount(maxThread);
         domain.setSaveFilename(getFilename());
         domain.setStage(DownloadTaskStageEnum.NEW.name());
-        domain.setStatus(DownloadTaskStageEnum.NEW.name());
+        domain.setStatus(DownloadTaskStatusEnum.NEW.name());
         return domain;
     }
 }

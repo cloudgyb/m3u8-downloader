@@ -24,7 +24,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -36,11 +35,7 @@ import java.util.stream.Collectors;
  */
 public class TaskDownloadThread extends Thread {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private static final int cpuCores = Runtime.getRuntime().availableProcessors();
-    private static final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(
-            cpuCores * 10, cpuCores * 20, 60, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(1000), new TaskDownloadThreadFactory(),
-            new ThreadPoolExecutor.AbortPolicy());
+    private final ThreadPoolExecutor threadPool;
     private final M3U8Parser m3U8Parser = new M3U8Parser();
     private final DownloadTaskEntity task;
     private final MediaSegmentService mediaSegmentService = MediaSegmentService.getInstance();
@@ -53,12 +48,9 @@ public class TaskDownloadThread extends Thread {
      */
     private final AtomicLong bytesCounter = new AtomicLong();
 
-    static {
-        threadPool.allowCoreThreadTimeOut(true);
-    }
-
-    public TaskDownloadThread(DownloadTaskEntity task) {
+    public TaskDownloadThread(DownloadTaskEntity task, ThreadPoolExecutor threadPool) {
         this.task = task;
+        this.threadPool = threadPool;
         setName("TaskDownloadManageThread " + task.getId());
     }
 
@@ -69,52 +61,40 @@ public class TaskDownloadThread extends Thread {
             long beginTime = System.currentTimeMillis();
             String stage = task.getStage();
             DownloadTaskStageEnum downloadTaskStageEnum = DownloadTaskStageEnum.valueOf(stage);
-            boolean needM3u8Parse = isNeedM3u8Parse(downloadTaskStageEnum);
-            //先解析 m3u8 ，如果没有解析过
-            if (needM3u8Parse) {
-                if (isStopOrThreadInterrupted()) {
-                    return;
-                }
+            // 如果处于 NEW 阶段，则先解析 m3u8 索引文件
+            if (DownloadTaskStageEnum.NEW == downloadTaskStageEnum) {
                 m3u8IndexParse();
             }
             stage = task.getStage();
             downloadTaskStageEnum = DownloadTaskStageEnum.valueOf(stage);
-            //如果 m3u8 解析失败了
-            if (needM3u8Parse && DownloadTaskStageEnum.M3U8_PARSE_FAILED == downloadTaskStageEnum) {
+            // 如果还在 NEW 阶段，说明 m3u8 解析失败了，退出
+            if (DownloadTaskStageEnum.NEW == downloadTaskStageEnum) {
                 return;
             }
-            // 如果需要进行片段下载
-            if (DownloadTaskStageEnum.M3U8_PARSED == downloadTaskStageEnum ||
-                    DownloadTaskStageEnum.DOWNLOADING == downloadTaskStageEnum
-                    || DownloadTaskStageEnum.DOWNLOAD_FAILED == downloadTaskStageEnum) {
-                if (isStopOrThreadInterrupted()) {
-                    return;
-                }
+            if (isStopOrThreadInterrupted()) {
+                return;
+            }
+            // 如果 m3u8 索引文件解析完成则开始（或继续）进行片段下载
+            if (DownloadTaskStageEnum.M3U8_PARSED == downloadTaskStageEnum) {
                 downloadMediaSegments(task);
             }
             stage = task.getStage();
             downloadTaskStageEnum = DownloadTaskStageEnum.valueOf(stage);
-            // 片段下载是否失败
-            if (DownloadTaskStageEnum.DOWNLOAD_FAILED == downloadTaskStageEnum) {
+            // 如果还在 M3U8_PARSED 阶段，则下载失败了，退出
+            if (DownloadTaskStageEnum.M3U8_PARSED == downloadTaskStageEnum) {
                 return;
             }
-            // 如果需要媒体片段合并
-            if (DownloadTaskStageEnum.DOWNLOAD_FINISHED == downloadTaskStageEnum ||
-                    DownloadTaskStageEnum.SEGMENT_MERGING == downloadTaskStageEnum ||
-                    DownloadTaskStageEnum.SEGMENT_MERGE_FAILED == downloadTaskStageEnum
-            ) {
-                if (isStopOrThreadInterrupted()) {
-                    return;
-                }
+            if (isStopOrThreadInterrupted()) {
+                return;
+            }
+            // 如果处于 DOWNLOAD_FINISHED 阶段，则开始媒体片段合并
+            if (DownloadTaskStageEnum.DOWNLOAD_FINISHED == downloadTaskStageEnum) {
                 mergerMediaSegment(task);
             }
             stage = task.getStage();
             downloadTaskStageEnum = DownloadTaskStageEnum.valueOf(stage);
-            // 是否合并失败
-            if (DownloadTaskStageEnum.SEGMENT_MERGE_FAILED == downloadTaskStageEnum) {
-                return;
-            }
-            if (isStopOrThreadInterrupted()) {
+            // 如果还处于 DOWNLOAD_FINISHED 则合并失败，退出
+            if (DownloadTaskStageEnum.DOWNLOAD_FINISHED == downloadTaskStageEnum) {
                 return;
             }
             // 成功（完成）
@@ -127,11 +107,10 @@ public class TaskDownloadThread extends Thread {
             publishStatus(DownloadTaskStatusEnum.FINISHED, 100.0, DownloadTaskStageEnum.FINISHED);
         } finally {
             taskDownloadThreadManager.removeFuture(task.getId());
-            String reason = isStopped.get() ? "手动停止" : "下载完成";
             isStopped.set(true);
             @SuppressWarnings("unused")
             boolean isInterrupted = Thread.interrupted(); // 清除线程中断状态
-            logger.info("任务(ID:{})下载线程终止退出({})！", task.getId(), reason);
+            logger.info("任务(ID:{})下载线程终止退出！", task.getId());
         }
     }
 
@@ -140,10 +119,9 @@ public class TaskDownloadThread extends Thread {
     }
 
     private void mergerMediaSegment(DownloadTaskEntity task) {
-        task.setStage(DownloadTaskStageEnum.SEGMENT_MERGING.name());
-        task.setStatus(DownloadTaskStatusEnum.RUNNING.name());
+        task.setStatus(DownloadTaskStatusEnum.SEGMENT_MERGING.name());
         downloadTaskService.updateById(task);
-        publishStatus(DownloadTaskStatusEnum.RUNNING, 100.0, DownloadTaskStageEnum.SEGMENT_MERGING);
+        publishStatus(DownloadTaskStatusEnum.SEGMENT_MERGING, 100.0, DownloadTaskStageEnum.DOWNLOAD_FINISHED);
         Integer tid = task.getId();
         try {
             // 合并媒体片段
@@ -158,44 +136,51 @@ public class TaskDownloadThread extends Thread {
             String targetFilePath = downloadDir + File.separator + saveFilename;
             FfmpegUtil.mergeTS(fileSegments, targetFilePath, true);
             task.setStage(DownloadTaskStageEnum.SEGMENT_MERGED.name());
-            task.setStatus(DownloadTaskStatusEnum.RUNNING.name());
+            task.setStatus(DownloadTaskStatusEnum.SEGMENT_MERGED.name());
             task.setFilePath(targetFilePath);
             task.setSaveFilename(saveFilename);
             downloadTaskService.updateById(task);
-            publishStatus(DownloadTaskStatusEnum.RUNNING, 0.0, DownloadTaskStageEnum.SEGMENT_MERGED);
+            publishStatus(DownloadTaskStatusEnum.SEGMENT_MERGED, 0.0, DownloadTaskStageEnum.SEGMENT_MERGED);
         } catch (Exception e) {
-            task.setStage(DownloadTaskStageEnum.SEGMENT_MERGE_FAILED.name());
-            task.setStatus(DownloadTaskStatusEnum.STOPPED_ERROR.name());
+            task.setStage(DownloadTaskStageEnum.DOWNLOAD_FINISHED.name());
+            task.setStatus(DownloadTaskStatusEnum.SEGMENT_MERGE_FAILED.name());
             downloadTaskService.updateById(task);
-            publishStatus(DownloadTaskStatusEnum.STOPPED_ERROR, 0.0, DownloadTaskStageEnum.SEGMENT_MERGE_FAILED);
+            publishStatus(DownloadTaskStatusEnum.SEGMENT_MERGE_FAILED, 0.0,
+                    DownloadTaskStageEnum.DOWNLOAD_FINISHED);
         }
     }
 
+    /**
+     * 下载媒体片段
+     */
     private void downloadMediaSegments(DownloadTaskEntity task) {
-        task.setStage(DownloadTaskStageEnum.DOWNLOADING.name());
-        task.setStatus(DownloadTaskStatusEnum.RUNNING.name());
-        startDownloadRateUpdateThread();
+        task.setStatus(DownloadTaskStatusEnum.DOWNLOADING.name());
+        Future<?> rateUpdateThreadFuture = startDownloadRateUpdateThread();
         downloadTaskService.updateById(task);
-        publishStatus(DownloadTaskStatusEnum.RUNNING,
-                getProgress(task),
-                DownloadTaskStageEnum.DOWNLOADING);
+        if (isStopOrThreadInterrupted()) {
+            rateUpdateThreadFuture.cancel(true);
+            return;
+        }
+        publishStatus(DownloadTaskStatusEnum.DOWNLOADING, getProgress(task), DownloadTaskStageEnum.M3U8_PARSED);
         Integer tid = task.getId();
         try {
-            // 下载片段
-            ArrayList<Future<MediaSegmentEntity>> futures = new ArrayList<>();
             Integer maxThreadCount = task.getMaxThreadCount();
             maxThreadCount = maxThreadCount == 0 ?
                     ApplicationStore.getSystemConfig().getDefaultThreadCount() : maxThreadCount;
-            logger.info("使用最大{}个线程去下载任务（ID:{}）", maxThreadCount, tid);
+            if (logger.isInfoEnabled()) {
+                logger.info("使用最大{}个线程去下载任务（ID:{}）", maxThreadCount, tid);
+            }
+            ArrayList<Future<MediaSegmentEntity>> futures = new ArrayList<>();
+            // 分批下载片段
             for (; ; ) {
+                futures.clear();
                 if (isStopOrThreadInterrupted()) {
                     return;
                 }
                 List<MediaSegmentEntity> mediaSegmentEntities = mediaSegmentService
                         .getByTaskId(tid, false, maxThreadCount);
-                if (mediaSegmentEntities.isEmpty())
+                if (mediaSegmentEntities.isEmpty()) // 所有片段都已经下载完成，退出
                     break;
-                futures.clear();
                 for (MediaSegmentEntity mediaSegmentEntity : mediaSegmentEntities) {
                     Future<MediaSegmentEntity> future = threadPool.submit(() -> {
                         long staterTime = System.currentTimeMillis();
@@ -246,14 +231,13 @@ public class TaskDownloadThread extends Thread {
                     try {
                         future.get();
                         task.setFinishMediaSegment(task.getFinishMediaSegment() + 1);
-                        task.setStatus(DownloadTaskStatusEnum.RUNNING.name());
+                        task.setStatus(DownloadTaskStatusEnum.DOWNLOADING.name());
                         downloadTaskService.updateById(task);
-                        publishStatus(DownloadTaskStatusEnum.RUNNING,
-                                getProgress(task),
-                                DownloadTaskStageEnum.DOWNLOADING
+                        publishStatus(DownloadTaskStatusEnum.DOWNLOADING, getProgress(task),
+                                DownloadTaskStageEnum.M3U8_PARSED
                         );
                     } catch (Exception e) {
-                        logger.error("等待下载线程池中媒体片段下载完成是发生异常！{}", e.getClass());
+                        logger.error("等待下载线程池中媒体片段下载完成是发生异常！Exception:{}", e.getClass().getSimpleName());
                         if (e instanceof InterruptedException) { // future.get() 中被中断
                             Thread.currentThread().interrupt(); // 重新设置中断状态，让后续流程能够获取中断状态
                         }
@@ -266,24 +250,26 @@ public class TaskDownloadThread extends Thread {
                     }
                 }
             }
-
             task.setStage(DownloadTaskStageEnum.DOWNLOAD_FINISHED.name());
-            task.setStatus(DownloadTaskStatusEnum.RUNNING.name());
+            task.setStatus(DownloadTaskStatusEnum.DOWNLOAD_FINISHED.name());
             downloadTaskService.updateById(task);
-            publishStatus(DownloadTaskStatusEnum.RUNNING, 100.0, DownloadTaskStageEnum.DOWNLOAD_FINISHED);
+            publishStatus(DownloadTaskStatusEnum.DOWNLOAD_FINISHED, 100.0,
+                    DownloadTaskStageEnum.DOWNLOAD_FINISHED);
         } catch (Exception e) {
-            task.setStage(DownloadTaskStageEnum.DOWNLOAD_FAILED.name());
-            task.setStatus(DownloadTaskStatusEnum.STOPPED_ERROR.name());
+            task.setStage(DownloadTaskStageEnum.M3U8_PARSED.name()); // 如果下载出现异常，不能将阶段改为下载完成
+            task.setStatus(DownloadTaskStatusEnum.DOWNLOAD_FAILED.name());
             downloadTaskService.updateById(task);
-            publishStatus(DownloadTaskStatusEnum.STOPPED_ERROR, getProgress(task),
-                    DownloadTaskStageEnum.DOWNLOAD_FAILED);
+            publishStatus(DownloadTaskStatusEnum.DOWNLOAD_FAILED, getProgress(task),
+                    DownloadTaskStageEnum.M3U8_PARSED);
+        } finally {
+            rateUpdateThreadFuture.cancel(true);
         }
     }
 
     @SuppressWarnings("all")
-    private void startDownloadRateUpdateThread() {
-        threadPool.submit(() -> {
-            while (!isStopped.get()) {
+    private Future<?> startDownloadRateUpdateThread() {
+        return threadPool.submit(() -> {
+            while (!Thread.currentThread().isInterrupted() && !isStopped.get()) {
                 publishDownloadRate(bytesCounter.get(), 1000);
                 bytesCounter.set(0L);
                 try {
@@ -298,29 +284,37 @@ public class TaskDownloadThread extends Thread {
         return (double) task.getFinishMediaSegment() / task.getTotalMediaSegment();
     }
 
-    private boolean isNeedM3u8Parse(DownloadTaskStageEnum downloadTaskStageEnum) {
-        return DownloadTaskStageEnum.NEW == downloadTaskStageEnum ||
-                DownloadTaskStageEnum.M3U8_PARSING == downloadTaskStageEnum ||
-                DownloadTaskStageEnum.M3U8_PARSE_FAILED == downloadTaskStageEnum;
-    }
-
     /**
      * m3u8 索引文件解析
      */
     private void m3u8IndexParse() {
         int tid = task.getId();
         String url = task.getUrl();
-        logger.info("开始解析任务对应的 m3u8 url: {} tid:{}", url, tid);
-        task.setStage(DownloadTaskStageEnum.M3U8_PARSING.name());
-        task.setStatus(DownloadTaskStatusEnum.RUNNING.name());
+        if (logger.isInfoEnabled()) {
+            logger.info("开始解析任务对应的 m3u8 url: {} tid:{}", url, tid);
+        }
+        task.setStatus(DownloadTaskStatusEnum.M3U8_PARSING.name());
         downloadTaskService.updateById(task);
-        publishStatus(DownloadTaskStatusEnum.RUNNING, null,
-                DownloadTaskStageEnum.M3U8_PARSING);
+        publishStatus(DownloadTaskStatusEnum.M3U8_PARSING, null,
+                DownloadTaskStageEnum.NEW);
+        if (isStopOrThreadInterrupted()) {
+            return;
+        }
         try {
-            Future<List<MediaSegment>> res = threadPool.submit(
+            Future<List<MediaSegment>> future = threadPool.submit(
                     () -> m3U8Parser.playlistParse(url)
             );
-            List<MediaSegment> mediaSegments = res.get();
+            List<MediaSegment> mediaSegments;
+            try {
+                mediaSegments = future.get();
+            } catch (InterruptedException e) { // 处理中断
+                future.cancel(true); // 给解析线程发送一个中断信号
+                Thread.currentThread().interrupt(); // 重新设置中断状态，让后续流程能够获取中断状态
+                return;
+            }
+            if (isStopOrThreadInterrupted()) {
+                return;
+            }
             if (!mediaSegments.isEmpty()) {
                 mediaSegmentService.saveAllMediaSegments(tid, mediaSegments);
             } else {
@@ -329,12 +323,12 @@ public class TaskDownloadThread extends Thread {
             task.setTotalMediaSegment(mediaSegments.size());
             task.setFinishMediaSegment(0);
             task.setStage(DownloadTaskStageEnum.M3U8_PARSED.name());
-            task.setStatus(DownloadTaskStatusEnum.RUNNING.name());
-            publishStatus(DownloadTaskStatusEnum.RUNNING, null, DownloadTaskStageEnum.M3U8_PARSED);
+            task.setStatus(DownloadTaskStatusEnum.M3U8_PARSED.name());
+            publishStatus(DownloadTaskStatusEnum.M3U8_PARSED, null, DownloadTaskStageEnum.M3U8_PARSED);
         } catch (Exception e) {
-            task.setStage(DownloadTaskStageEnum.M3U8_PARSE_FAILED.name());
-            task.setStatus(DownloadTaskStatusEnum.STOPPED_ERROR.name());
-            publishStatus(DownloadTaskStatusEnum.STOPPED_ERROR, null, DownloadTaskStageEnum.M3U8_PARSE_FAILED);
+            task.setStage(DownloadTaskStageEnum.NEW.name());
+            task.setStatus(DownloadTaskStatusEnum.M3U8_PARSE_FAILED.name());
+            publishStatus(DownloadTaskStatusEnum.M3U8_PARSE_FAILED, null, DownloadTaskStageEnum.NEW);
             logger.error("解析任务对应的 m3u8 url: {} tid:{} 失败！", url, tid, e);
         }
         downloadTaskService.updateById(task);
@@ -363,16 +357,5 @@ public class TaskDownloadThread extends Thread {
         isStopped.set(true);
         // 产生中断，让等待的 Future 退出等待
         this.interrupt();
-    }
-
-    private static class TaskDownloadThreadFactory implements ThreadFactory {
-        private final AtomicInteger threadCounter = new AtomicInteger(0);
-
-        @Override
-        public Thread newThread(Runnable runnable) {
-            Thread thread = new Thread(runnable);
-            thread.setName("TaskDownloadThread " + threadCounter.getAndIncrement());
-            return thread;
-        }
     }
 }

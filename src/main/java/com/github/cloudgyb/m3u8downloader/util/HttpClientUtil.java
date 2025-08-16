@@ -1,5 +1,8 @@
 package com.github.cloudgyb.m3u8downloader.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +20,7 @@ import java.time.Duration;
  */
 public class HttpClientUtil {
     private final static HttpClient httpClient;
+    private static final Logger log = LoggerFactory.getLogger(HttpClientUtil.class);
 
     static {
         httpClient = HttpClient.newBuilder()
@@ -32,6 +36,10 @@ public class HttpClientUtil {
         try {
             return execGet(url, HttpResponse.BodyHandlers.ofInputStream());
         } catch (Exception e) {
+            log.error("执行请求失败！{}-{}:{}", url, e.getClass().getName(), e.getMessage());
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt(); // 恢复中断,让后续逻辑能够获取中断状态
+            }
             return ByteArrayInputStream.nullInputStream();
         }
     }

@@ -60,14 +60,11 @@ public class DownloadTaskViewModel implements EventAware {
         String statusText = this.taskDomain.getStage();
         String status = this.taskDomain.getStatus();
         DownloadTaskStatusEnum statusEnum = DownloadTaskStatusEnum.valueOf(status);
-        if (statusEnum == DownloadTaskStatusEnum.RUNNING) {
-            statusEnum = DownloadTaskStatusEnum.STOPPED_ERROR;
-        }
-        DownloadTaskStageEnum stage = DownloadTaskStageEnum.valueOf(statusText);
+        DownloadTaskStageEnum stageEnum = DownloadTaskStageEnum.valueOf(statusText);
         Integer finishMediaSegment = this.taskDomain.getFinishMediaSegment();
         Integer totalMediaSegment = this.taskDomain.getTotalMediaSegment();
         double progressValue = totalMediaSegment == 0 ? 0D : (double) finishMediaSegment / totalMediaSegment;
-        this.progressAndStatus.set(new ProgressAndStatus(statusEnum, progressValue, stage));
+        this.progressAndStatus.set(new ProgressAndStatus(statusEnum, progressValue, stageEnum));
         this.rate.set("-- KB/s");
     }
 
@@ -88,8 +85,7 @@ public class DownloadTaskViewModel implements EventAware {
     }
 
     public void remove() {
-        if (DownloadTaskStageEnum.isRunning(this.progressAndStatus.get().getStage()))
-            this.stop();
+        stop();
         ApplicationStore.getNoFinishedTasks().remove(this);
         downloadTaskService.deleteById(taskDomain.getId());
         DownloadTaskStatusChangeEventNotifier eventNotifier = DownloadTaskStatusChangeEventNotifier.INSTANCE;

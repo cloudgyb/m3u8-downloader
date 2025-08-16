@@ -1,6 +1,5 @@
 package com.github.cloudgyb.m3u8downloader;
 
-import com.github.cloudgyb.m3u8downloader.domain.DownloadTaskStatusEnum;
 import com.github.cloudgyb.m3u8downloader.domain.entity.SystemConfig;
 import com.github.cloudgyb.m3u8downloader.domain.dao.SystemConfigDao;
 import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
@@ -25,17 +24,7 @@ public class ApplicationStore {
     static {
         List<DownloadTaskEntity> list = downloadTaskService.getAllNotFinishedTask();
         for (DownloadTaskEntity task : list) {
-            DownloadTaskStatusEnum statusEnum = DownloadTaskStatusEnum.STOPPED_ERROR;
-            // 程序启动初始化下载任务，设置状态为 STOPPED
-            String status = task.getStatus();
-            if (status != null) {
-                statusEnum = DownloadTaskStatusEnum.valueOf(status);
-                if (statusEnum == DownloadTaskStatusEnum.RUNNING) {
-                    statusEnum = DownloadTaskStatusEnum.STOPPED_ERROR;
-                }
-            }
-            task.setStatus(statusEnum.name());
-            final DownloadTaskViewModel downloadTaskViewModel = new DownloadTaskViewModel(task);
+            DownloadTaskViewModel downloadTaskViewModel = new DownloadTaskViewModel(task);
             noFinishedTask.add(downloadTaskViewModel);
         }
         //初始化系统配置

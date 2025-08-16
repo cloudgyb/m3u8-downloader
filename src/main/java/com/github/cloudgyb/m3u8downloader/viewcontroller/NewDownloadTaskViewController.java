@@ -2,6 +2,7 @@ package com.github.cloudgyb.m3u8downloader.viewcontroller;
 
 import com.github.cloudgyb.m3u8downloader.ApplicationContext;
 import com.github.cloudgyb.m3u8downloader.ApplicationStore;
+import com.github.cloudgyb.m3u8downloader.model.NewDownloadTaskViewModel;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;

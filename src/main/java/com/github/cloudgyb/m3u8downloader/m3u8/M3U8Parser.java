@@ -38,57 +38,32 @@ public class M3U8Parser {
             masterPlaylist = masterPlaylistUrlParse(url);
             logger.info("尝试解析{}为主播放列表完成，包含{}个播放列表！", url, masterPlaylist.size());
         } catch (PlaylistParserException e) {
-            logger.error("尝试解析{}为主播放列表失败！{}", url, e.getClass());
+            logger.error("尝试解析{}为主播放列表失败！{}", url, e.getClass().getSimpleName());
             // 作为媒体播放列表进行处理
             masterPlaylist = Collections.singletonList(url);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
-        logger.info("开始尝试解析为媒体播放列表...");
         for (String mpl : masterPlaylist) {
             try {
                 logger.info("开始尝试解析{}为媒体播放列表...", mpl);
                 List<com.github.cloudgyb.m3u8downloader.m3u8.MediaSegment> mediaPlaylistUrls = mediaPlaylistParse(mpl);
                 mediaSegments.addAll(mediaPlaylistUrls);
             } catch (PlaylistParserException e) {
-                logger.error("尝试解析{}为媒体播放列表失败！{}", mpl, e.getClass());
+                logger.error("尝试解析{}为媒体播放列表失败！{}:{}", mpl, e.getClass().getSimpleName(), e.getMessage());
             } catch (IOException | InterruptedException e) {
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                    return mediaSegments;
+                }
                 throw new RuntimeException(e);
             }
+            break;
         }
-        logger.info("解析为媒体播放列表，一共{}个媒体片段！", mediaSegments.size());
+        if (logger.isInfoEnabled()) {
+            logger.info("解析为媒体播放列表，一共{}个媒体片段！", mediaSegments.size());
+        }
         return mediaSegments;
-    }
-
-    @SuppressWarnings("unused")
-    public List<String> playlistUrlParse(String url) {
-        List<String> masterPlaylist;
-        List<String> mediaPlaylist = new ArrayList<>();
-        try {
-            logger.info("开始尝试解析{}为主播放列表", url);
-            masterPlaylist = masterPlaylistUrlParse(url);
-            logger.info("尝试解析{}为主播放列表完成，包含{}个播放列表！", url, masterPlaylist.size());
-        } catch (PlaylistParserException e) {
-            logger.error("尝试解析{}为主播放列表失败！{}", url, e.getClass());
-            // 作为媒体播放列表进行处理
-            masterPlaylist = Collections.singletonList(url);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        logger.info("开始尝试解析为媒体播放列表...");
-        for (String mpl : masterPlaylist) {
-            try {
-                logger.info("开始尝试解析{}为媒体播放列表...", mpl);
-                List<String> mediaPlaylistUrls = mediaPlaylistUrlParse(mpl);
-                mediaPlaylist.addAll(mediaPlaylistUrls);
-            } catch (PlaylistParserException e) {
-                logger.error("尝试解析{}为媒体播放列表失败！{}", mpl, e.getClass());
-            } catch (IOException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        logger.info("解析为媒体播放列表，一共{}个媒体片段！", mediaPlaylist.size());
-        return mediaPlaylist;
     }
 
     public List<String> masterPlaylistUrlParse(String url) throws IOException, InterruptedException {
@@ -106,23 +81,6 @@ public class M3U8Parser {
                     .collect(Collectors.toList());
         }
         return masterPlaylistUrls;
-    }
-
-    public List<String> mediaPlaylistUrlParse(String url) throws IOException, InterruptedException {
-        String baseUrl = URLUtil.getBaseUrl(url);
-        MediaPlaylistParser parser = new MediaPlaylistParser();
-        InputStream inputStream = HttpClientUtil.getAsInputStream(url);
-        List<String> mediaPlaylistUrls = null;
-        // Parse playlist
-        MediaPlaylist playlist = parser.readPlaylist(inputStream);
-        String s = parser.writePlaylistAsString(playlist);
-        System.out.println(s);
-        List<MediaSegment> mediaSegments = playlist.mediaSegments();
-        if (mediaSegments != null) {
-            mediaPlaylistUrls = mediaSegments.stream().map(MediaSegment::uri)
-                    .map(u -> addUrlSchemePrefixIfNeed(baseUrl, u)).collect(Collectors.toList());
-        }
-        return mediaPlaylistUrls;
     }
 
     public List<com.github.cloudgyb.m3u8downloader.m3u8.MediaSegment> mediaPlaylistParse(String url)

@@ -16,20 +16,31 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TaskDownloadThreadManager {
     private static final Logger logger = LoggerFactory.getLogger(TaskDownloadThreadManager.class);
     private static final TaskDownloadThreadManager instance = new TaskDownloadThreadManager();
-    // 下载任务主线程池
+    // 下载任务主线程池，负责整个下载过程
     private final ThreadPoolExecutor managerThreadPool;
+    // 下载任务工作线程池，负责下载任务片段
+    private final ThreadPoolExecutor workerThreadPool;
     // 下载中的任务 Future Map, key 是任务ID，value 是 Future
     private final ConcurrentHashMap<Integer, Future<?>> downloadingTaskFutures = new ConcurrentHashMap<>();
 
     private TaskDownloadThreadManager() {
-        int threadPoolSize = Runtime.getRuntime().availableProcessors();
+        int cpuCores = Runtime.getRuntime().availableProcessors();
         if (logger.isDebugEnabled()) {
-            logger.debug("本机CPU个数为{},创建同等大小的任务下载主线程池", threadPoolSize);
-            logger.debug("为了更少的资源占用，最多同时下载CPU个数({})个任务", threadPoolSize);
+            logger.debug("本机CPU个数为{},创建同等大小的任务下载主线程池", cpuCores);
+            logger.debug("为了更少的资源占用，最多同时下载CPU个数({})个任务", cpuCores);
         }
         this.managerThreadPool = new ThreadPoolExecutor(
-                threadPoolSize, threadPoolSize, 0, TimeUnit.MILLISECONDS,
-                new SynchronousQueue<>(true), new TaskDownloadMainThreadFactory());
+                cpuCores, cpuCores, 0, TimeUnit.MILLISECONDS,
+                new SynchronousQueue<>(true),
+                new TaskDownloadThreadFactory("TaskDownloadManagerThread-"));
+        this.workerThreadPool = new ThreadPoolExecutor(
+                cpuCores * 10, cpuCores * 20,
+                60, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000),
+                new TaskDownloadThreadFactory("TaskDownloadWorkerThread-"),
+                new ThreadPoolExecutor.AbortPolicy());
+        // 允许核心线程超时，当无下载任务时避免资源浪费
+        this.workerThreadPool.allowCoreThreadTimeOut(true);
     }
 
     public static TaskDownloadThreadManager getInstance() {
@@ -38,7 +49,7 @@ public class TaskDownloadThreadManager {
 
     public void startDownloadThread(DownloadTaskEntity task) {
         int id = task.getId();
-        TaskDownloadThread taskDownloadThread = new TaskDownloadThread(task);
+        TaskDownloadThread taskDownloadThread = new TaskDownloadThread(task, workerThreadPool);
         Future<?> future = managerThreadPool.submit(taskDownloadThread);
         downloadingTaskFutures.put(id, future);
     }
@@ -63,12 +74,18 @@ public class TaskDownloadThreadManager {
         if (logger.isDebugEnabled()) {
             logger.debug("优雅关闭线程池...");
         }
+        workerThreadPool.shutdown();
         managerThreadPool.shutdown();
         boolean isTerminated = false;
+        boolean isWorkerThreadPoolTerminated = false;
         try {
+            isWorkerThreadPoolTerminated = workerThreadPool.awaitTermination(2, TimeUnit.SECONDS);
             isTerminated = managerThreadPool.awaitTermination(2, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             logger.error("等待线程池优雅关闭被中断！");
+        }
+        if(!isWorkerThreadPoolTerminated) {
+            workerThreadPool.shutdownNow();
         }
         if (!isTerminated) {
             if (logger.isDebugEnabled()) {
@@ -86,12 +103,17 @@ public class TaskDownloadThreadManager {
         downloadingTaskFutures.remove(taskId);
     }
 
-    private static class TaskDownloadMainThreadFactory implements ThreadFactory {
+    private static class TaskDownloadThreadFactory implements ThreadFactory {
         private final AtomicInteger threadNumber = new AtomicInteger(0);
+        private final String threadNamePrefix;
+
+        public TaskDownloadThreadFactory(String threadNamePrefix) {
+            this.threadNamePrefix = threadNamePrefix;
+        }
 
         public Thread newThread(Runnable runnable) {
             Thread thread = new Thread(runnable);
-            thread.setName("TaskDownloadMainThread-" + threadNumber.getAndIncrement());
+            thread.setName(threadNamePrefix + threadNumber.getAndIncrement());
             return thread;
         }
     }
