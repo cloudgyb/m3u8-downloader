@@ -1,10 +1,12 @@
 package com.github.cloudgyb.m3u8downloader;
 
+import com.github.cloudgyb.m3u8downloader.conf.ProxyConfig;
 import com.github.cloudgyb.m3u8downloader.domain.entity.SystemConfig;
 import com.github.cloudgyb.m3u8downloader.domain.dao.SystemConfigDao;
 import com.github.cloudgyb.m3u8downloader.domain.entity.DownloadTaskEntity;
 import com.github.cloudgyb.m3u8downloader.domain.service.DownloadTaskService;
 import com.github.cloudgyb.m3u8downloader.model.DownloadTaskViewModel;
+import com.github.cloudgyb.m3u8downloader.util.HttpClientUtil;
 
 import java.io.File;
 import java.util.List;
@@ -41,6 +43,10 @@ public class ApplicationStore {
             systemConfig.setDownloadDir(defaultDownloadDir);
         }
         systemConfig.setDefaultTimeoutRetryCount(5);
+        ProxyConfig proxyConfig = systemConfig.getProxyConfig();
+        if (proxyConfig != null && proxyConfig.isProxyEnabled()) {
+            HttpClientUtil.proxy(proxyConfig);
+        }
         //
         workDir = System.getProperty("user.dir") + File.separator;
         tmpDir = System.getProperty("java.io.tmpdir");
