@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -62,7 +63,11 @@ public class SignalServer {
                     socket.getOutputStream()
                             .write("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n".getBytes(StandardCharsets.UTF_8));
                 } catch (IOException e) {
-                    log.error(e.getMessage());
+                    if (e instanceof SocketException) {
+                        log.info("SignalServer socket closed.");
+                    } else {
+                        log.error(e.getMessage());
+                    }
                 }
                 try {
                     for (SignalHandler handler : handlers) {
@@ -74,6 +79,7 @@ public class SignalServer {
                     log.error("信号处理器处理异常", e);
                 }
             }
+            log.info("SignalServer stopped.");
         });
         thread.setName("SignalServer");
         thread.start();
