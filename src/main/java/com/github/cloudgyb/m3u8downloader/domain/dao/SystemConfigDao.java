@@ -1,5 +1,7 @@
 package com.github.cloudgyb.m3u8downloader.domain.dao;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.cloudgyb.m3u8downloader.database.DBUtil;
 import com.github.cloudgyb.m3u8downloader.domain.entity.SystemConfig;
 import org.slf4j.Logger;
@@ -16,12 +18,13 @@ import java.util.List;
  * 2021/5/19 9:34
  */
 public class SystemConfigDao {
-    private static final String tableName = "system_config";
-    private static final String allField = "id,download_dir,default_thread_count";
-    private static final String selectByIdSQL = "select " + allField + " from " + tableName + " where id=?";
-    private static final String insertSQL = "insert into " + tableName + "(" + allField + ") values(?,?,?)";
-    private static final String updateSQL = "update " + tableName + " set download_dir=?,default_thread_count=? where id=?";
     private static final Logger log = LoggerFactory.getLogger(SystemConfigDao.class);
+    private static final String tableName = "system_config";
+    private static final String allField = "id,config_json";
+    private static final String selectByIdSQL = "select " + allField + " from " + tableName + " where id=?";
+    private static final String insertSQL = "insert into " + tableName + "(" + allField + ") values(?,?)";
+    private static final String updateSQL = "update " + tableName + " set config_json=? where id=?";
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private void insert(SystemConfig systemConfig) {
         Connection connection = null;
@@ -31,8 +34,7 @@ public class SystemConfigDao {
             connection = DBUtil.getConnection();
             ps = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
             ps.setInt(1, 1);
-            ps.setString(2, systemConfig.getDownloadDir());
-            ps.setInt(3, systemConfig.getDefaultThreadCount());
+            ps.setString(2, objectMapper.writeValueAsString(systemConfig));
             int i = ps.executeUpdate();
             if (i == 1) {
                 log.info("insert system config success");
@@ -45,7 +47,14 @@ public class SystemConfigDao {
                 systemConfig.setId(id);
             }
             connection.commit();
-        } catch (SQLException e) {
+        } catch (SQLException | JsonProcessingException e) {
+            if (e instanceof SQLException && connection != null) {
+                try {
+                    connection.rollback();
+                } catch (SQLException ex) {
+                    log.error("database exception", ex);
+                }
+            }
             log.error("database exception", e);
             throw new RuntimeException("database exception");
         } finally {
@@ -64,9 +73,8 @@ public class SystemConfigDao {
         try {
             connection = DBUtil.getConnection();
             ps = connection.prepareStatement(updateSQL);
-            ps.setString(1, systemConfig.getDownloadDir());
-            ps.setInt(2, systemConfig.getDefaultThreadCount());
-            ps.setInt(3, 1);
+            ps.setString(1, objectMapper.writeValueAsString(systemConfig));
+            ps.setInt(2, 1);
             int i = ps.executeUpdate();
             if (i == 1) {
                 log.info("update system config success");
@@ -75,7 +83,14 @@ public class SystemConfigDao {
             }
             connection.commit();
         } catch (SQLException e) {
+            try {
+                if (connection != null) connection.rollback();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
             throw new RuntimeException("database exception");
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         } finally {
             DBUtil.close(connection, ps, null);
         }
@@ -102,11 +117,16 @@ public class SystemConfigDao {
     private List<SystemConfig> convert(ResultSet rs) throws SQLException {
         List<SystemConfig> list = new ArrayList<>();
         while (rs.next()) {
-            SystemConfig config = new SystemConfig();
-            config.setId(rs.getInt(1));
-            config.setDownloadDir(rs.getString(2));
-            config.setDefaultThreadCount(rs.getInt(3));
-            list.add(config);
+            int id = rs.getInt(1);
+            String configJSON = rs.getString(2);
+            SystemConfig systemConfig;
+            try {
+                systemConfig = objectMapper.readValue(configJSON, SystemConfig.class);
+            } catch (JsonProcessingException e) {
+                log.error("json parse error", e);
+                systemConfig = new SystemConfig(); // 使用默认值
+            }
+            list.add(systemConfig);
         }
         return list;
     }

@@ -2,6 +2,7 @@ package com.github.cloudgyb.m3u8downloader.domain.entity;
 
 import com.github.cloudgyb.m3u8downloader.conf.ProxyConfig;
 
+import java.io.File;
 import java.io.Serializable;
 
 /**
@@ -11,11 +12,12 @@ import java.io.Serializable;
  * 2021/5/19 9:35
  */
 public class SystemConfig implements Serializable {
-    private Integer id;
-    private String downloadDir;
-    private Integer defaultThreadCount;
+    private Integer id = 1;
+    private String downloadDir = System.getProperty("user.home") +
+            File.separator + "Downloads" + File.separator;;
+    private Integer defaultThreadCount = 5;
     private Integer defaultTimeoutRetryCount;
-    private ProxyConfig proxyConfig;
+    private ProxyConfig proxyConfig = new ProxyConfig();
 
     public Integer getId() {
         return id;

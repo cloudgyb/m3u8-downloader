@@ -26,6 +26,7 @@ module m3u8downloader {
     opens com.github.cloudgyb.m3u8downloader.domain.entity to javafx.fxml;
     opens com.github.cloudgyb.m3u8downloader.domain.dao to javafx.fxml;
     opens com.github.cloudgyb.m3u8downloader.signal to com.fasterxml.jackson.databind;
+    opens com.github.cloudgyb.m3u8downloader.conf to com.fasterxml.jackson.databind;
 
     exports com.github.cloudgyb.m3u8downloader;
     exports com.github.cloudgyb.m3u8downloader.conf;

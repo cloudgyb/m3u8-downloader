@@ -1,25 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-<StackPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-           fx:id="stackPane"
+<?import javafx.scene.layout.*?>
+<StackPane fx:id="stackPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.github.cloudgyb.m3u8downloader.viewcontroller.DownloadSettingViewController">
     <padding>
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
     </padding>
-    <VBox alignment="CENTER" maxHeight="140.0" maxWidth="630.0"
+    <VBox alignment="CENTER" maxHeight="140.0" maxWidth="630.0" spacing="20.0"
           style="-fx-border-radius: 5px; -fx-border-style: solid; -fx-border-width: 1px; -fx-border-color: #ccc;">
         <padding>
             <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
         </padding>
-        <HBox minHeight="56.0">
+        <HBox>
             <Label alignment="CENTER_RIGHT" prefWidth="156.0" text="下载目录："/>
             <TextField fx:id="downDirField" disable="true" prefWidth="383.0"/>
-            <Hyperlink fx:id="changeDownDirLink" onAction="#changeDownDirLinkClick" text="更改"/>
+            <Hyperlink onAction="#changeDownDirLinkClick" text="更改"/>
         </HBox>
         <HBox prefWidth="50.0">
             <Label alignment="CENTER_RIGHT" prefWidth="156.0" text="每个下载任务线程数："/>
@@ -27,5 +24,36 @@
                     onScrollFinished="#changeDefaultThreadCount" prefWidth="386.0" showTickLabels="true"
                     showTickMarks="true" snapToTicks="true" value="1.0"/>
         </HBox>
+        <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="571.0">
+            <Label alignment="CENTER_RIGHT" prefWidth="156.0" text="网络代理设置："/>
+            <CheckBox fx:id="proxyEnableCheckBox" mnemonicParsing="false" text="启用"/>
+            <ChoiceBox fx:id="proxyTypeChoiceBox">
+                <HBox.margin>
+                    <Insets left="20.0" right="20.0"/>
+                </HBox.margin>
+            </ChoiceBox>
+            <Label prefWidth="156.0" text="代理类型"/>
+        </HBox>
+        <HBox prefHeight="100.0" prefWidth="50.0">
+            <Label alignment="CENTER_RIGHT" prefWidth="156.0" text=" "/>
+            <TextField fx:id="proxyHostTextField" prefHeight="23.0" prefWidth="193.0" promptText="代理主机"/>
+            <TextField fx:id="proxyPortTextField" prefHeight="23.0" prefWidth="58.0" promptText="端口">
+                <HBox.margin>
+                    <Insets left="10.0"/>
+                </HBox.margin>
+            </TextField>
+        </HBox>
+        <HBox layoutX="31.0" layoutY="168.0" prefHeight="100.0" prefWidth="50.0">
+            <Label alignment="CENTER_RIGHT" prefWidth="156.0" text=" "/>
+            <TextField fx:id="proxyUsernameTextField" prefWidth="193.0" promptText="代理服务用户名"/>
+            <PasswordField fx:id="proxyPasswordTextField" prefWidth="193.0" promptText="代理服务密码">
+                <HBox.margin>
+                    <Insets left="10.0"/>
+                </HBox.margin>
+            </PasswordField>
+        </HBox>
+        <StackPane.margin>
+            <Insets/>
+        </StackPane.margin>
     </VBox>
 </StackPane>

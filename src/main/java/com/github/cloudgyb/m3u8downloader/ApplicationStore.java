@@ -44,8 +44,12 @@ public class ApplicationStore {
         }
         systemConfig.setDefaultTimeoutRetryCount(5);
         ProxyConfig proxyConfig = systemConfig.getProxyConfig();
-        if (proxyConfig != null && proxyConfig.isProxyEnabled()) {
-            HttpClientUtil.proxy(proxyConfig);
+        if (proxyConfig != null) {
+            if (proxyConfig.isProxyEnabled()) {
+                HttpClientUtil.proxyConfigUpdate(proxyConfig);
+            }
+        } else {
+            systemConfig.setProxyConfig(new ProxyConfig());
         }
         //
         workDir = System.getProperty("user.dir") + File.separator;

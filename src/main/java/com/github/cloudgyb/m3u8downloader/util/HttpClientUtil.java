@@ -1,6 +1,7 @@
 package com.github.cloudgyb.m3u8downloader.util;
 
 import com.github.cloudgyb.m3u8downloader.conf.ProxyConfig;
+import com.github.cloudgyb.m3u8downloader.conf.SocksProxySelector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,6 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -24,27 +26,47 @@ import java.util.Base64;
  * 2021/5/17 16:01
  */
 public class HttpClientUtil {
-    private volatile static HttpClient httpClient;
     private static final Logger log = LoggerFactory.getLogger(HttpClientUtil.class);
     private static final HttpClient.Builder httpClientBuilder = HttpClient.newBuilder();
-    private volatile static ProxyConfig proxyConfig;
+    private volatile static HttpClient httpClient;
+    private static final ProxyConfig proxyConfig;
 
     static {
-        proxyConfig = new ProxyConfig("", 0, "", "", false);
+        proxyConfig = new ProxyConfig();
         httpClient = httpClientBuilder
                 .connectTimeout(Duration.ofSeconds(5))
                 .build();
     }
 
-    public static void proxy(ProxyConfig proxyConfig) {
-        HttpClientUtil.proxyConfig = proxyConfig;
+    public static void proxyAuthUpdate(ProxyConfig proxyConfig) {
+        ProxyConfig proxyConfig1 = HttpClientUtil.proxyConfig;
+        proxyConfig1.setProxyUsername(proxyConfig.getProxyUsername());
+        proxyConfig1.setProxyPassword(proxyConfig.getProxyPassword());
+    }
+
+    public static void proxyConfigUpdate(ProxyConfig proxyConfig) {
+        boolean oldProxyConfigProxyEnabled = HttpClientUtil.proxyConfig.isProxyEnabled();
+        HttpClientUtil.proxyConfig.update(proxyConfig);
+        // 如果代理未开启且本次更新配置也未开启代理，则不更新HttpClient
+        if (!oldProxyConfigProxyEnabled && !proxyConfig.isProxyEnabled()) {
+            return;
+        }
         if (proxyConfig.isProxyEnabled()) {
-            InetSocketAddress socketAddr = new InetSocketAddress(proxyConfig.getProxyHost(), proxyConfig.getProxyPort());
-            ProxySelector proxySelector = ProxySelector.of(socketAddr);
+            ProxySelector proxySelector;
+            log.info("启用代理：{}", proxyConfig);
+            if (Proxy.Type.SOCKS.equals(proxyConfig.getProxyType())) {
+                proxySelector = new SocksProxySelector(proxyConfig.getProxyHost(), proxyConfig.getProxyPort());
+            } else {
+                InetSocketAddress socketAddr = new InetSocketAddress(
+                        proxyConfig.getProxyHost(),
+                        proxyConfig.getProxyPort());
+                proxySelector = ProxySelector.of(socketAddr);
+            }
             httpClient = httpClientBuilder
                     .proxy(proxySelector)
                     .build();
         } else {
+            log.info("关闭代理");
             httpClient = httpClientBuilder
                     .proxy(ProxySelector.of(null))
                     .build();

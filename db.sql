@@ -29,6 +29,5 @@ CREATE TABLE "media_segment"
 CREATE TABLE "system_config"
 (
     "id"                   INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "download_dir"         TEXT,
-    "default_thread_count" TEXT
+    "config_json"         TEXT
 );
